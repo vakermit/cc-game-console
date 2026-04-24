@@ -2,6 +2,7 @@ local channel = 123
 local sides = {"top", "left", "right", "back"}
 local state = {}
 local computerID = os.getComputerID()
+local lastSent = nil
 
 local function drawState(msg)
     term.setBackgroundColor(colors.black)
@@ -47,6 +48,14 @@ local function drawState(msg)
     print("")
     term.setTextColor(colors.white)
     print("  > " .. msg)
+
+    if lastSent then
+        print("")
+        term.setTextColor(colors.lightGray)
+        print("  Last sent:")
+        term.setTextColor(colors.cyan)
+        print("  " .. textutils.serialize(lastSent))
+    end
 end
 
 local modem = peripheral.find("modem")
@@ -78,6 +87,7 @@ while true do
                 computerID = computerID,
             }
             modem.transmit(channel, computerID, message)
+            lastSent = message
             state[side] = strength
         end
     end

@@ -159,18 +159,30 @@ local function showTitleScreen(game)
 
     local gw, gh = gameWin.getSize()
     local title = game.title():upper()
-    local textW = block_letters.width(title)
-    local tx = math.max(1, math.floor((gw - textW) / 2) + 1)
-    local ty = math.max(1, math.floor(gh / 2) - 4)
-    block_letters.draw(tx, ty, title)
+    local words = {}
+    for word in title:gmatch("%S+") do
+        table.insert(words, word)
+    end
 
+    local lineHeight = 6
+    local totalHeight = #words * lineHeight - 1
+    local ty = math.max(1, math.floor((gh - totalHeight) / 2) - 2)
+
+    for i, word in ipairs(words) do
+        local wordW = block_letters.width(word)
+        local wx = math.max(1, math.floor((gw - wordW) / 2) + 1)
+        local wy = ty + (i - 1) * lineHeight
+        block_letters.draw(wx, wy, word)
+    end
+
+    local belowTitle = ty + totalHeight + 2
     local prompt = "Press any button to start"
-    term.setCursorPos(math.floor((gw - #prompt) / 2) + 1, ty + 8)
+    term.setCursorPos(math.floor((gw - #prompt) / 2) + 1, belowTitle)
     term.write(prompt)
 
     if game.getControls then
         local controls = game.getControls()
-        local cy = ty + 10
+        local cy = belowTitle + 2
         for _, ctrl in ipairs(controls) do
             local line = ctrl.action .. " - " .. ctrl.description
             term.setCursorPos(math.floor((gw - #line) / 2) + 1, cy)
