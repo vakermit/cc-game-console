@@ -79,8 +79,8 @@ function console.discoverGames()
         if file:sub(1, #prefix) == prefix and file:sub(-4) == ".lua" then
             local name = file:sub(1, -5)
             if name ~= testGame then
-                local path = gameDir .. "/" .. file
-                local ok, game = pcall(dofile, path)
+                local modPath = gameDir .. "." .. name
+                local ok, game = pcall(require, modPath)
                 if ok and type(game) == "table" and type(game.title) == "function" then
                     table.insert(games, game)
                 end
@@ -88,16 +88,19 @@ function console.discoverGames()
         end
     end
 
+    table.sort(games, function(a, b) return a.title():lower() < b.title():lower() end)
+
     return games
 end
 
+local menuColors = {
+    colors.cyan, colors.yellow, colors.lime, colors.orange,
+    colors.lightBlue, colors.magenta, colors.pink, colors.red,
+}
+
 function console.showMenu(games)
+    local totalItems = #games + 1
     local selected = 1
-    local menuItems = {}
-    for i, game in ipairs(games) do
-        menuItems[i] = game.title()
-    end
-    table.insert(menuItems, "Shutdown")
 
     drawStatus("vgame - Select a game")
     local timerId = os.startTimer(config.system.tickRate)
@@ -109,12 +112,12 @@ function console.showMenu(games)
 
             if input.wasPressed(config.actions.menu_up) then
                 selected = selected - 1
-                if selected < 1 then selected = #menuItems end
+                if selected < 1 then selected = totalItems end
             elseif input.wasPressed(config.actions.menu_down) then
                 selected = selected + 1
-                if selected > #menuItems then selected = 1 end
+                if selected > totalItems then selected = 1 end
             elseif input.wasPressed(config.actions.menu_select) then
-                if selected == #menuItems then
+                if selected == totalItems then
                     return nil
                 end
                 return games[selected]
@@ -126,21 +129,37 @@ function console.showMenu(games)
             term.clear()
 
             local gw, gh = gameWin.getSize()
-            local startY = math.max(1, math.floor((gh - #menuItems) / 2))
+            local gameStartY = math.max(1, math.floor((gh - #games) / 2) - 1)
 
-            for i, item in ipairs(menuItems) do
-                term.setCursorPos(math.floor((gw - #item) / 2), startY + i - 1)
-                if i == selected then
-                    term.setBackgroundColor(colors.white)
+            for i, g in ipairs(games) do
+                local title = g.title()
+                local itemColor = menuColors[((i - 1) % #menuColors) + 1]
+                term.setCursorPos(math.floor((gw - #title) / 2), gameStartY + i - 1)
+                if selected == i then
+                    term.setBackgroundColor(itemColor)
                     term.setTextColor(colors.black)
-                    term.write(" " .. item .. " ")
-                    term.setBackgroundColor(colors.black)
-                    term.setTextColor(colors.white)
+                    term.write(" " .. title .. " ")
                 else
-                    term.write(item)
+                    term.setBackgroundColor(colors.black)
+                    term.setTextColor(itemColor)
+                    term.write(title)
                 end
             end
 
+            local shutdownY = gh - 1
+            local shutdownLabel = "Shutdown"
+            term.setCursorPos(math.floor((gw - #shutdownLabel) / 2), shutdownY)
+            if selected == totalItems then
+                term.setBackgroundColor(colors.red)
+                term.setTextColor(colors.white)
+                term.write(" " .. shutdownLabel .. " ")
+            else
+                term.setBackgroundColor(colors.black)
+                term.setTextColor(colors.gray)
+                term.write(shutdownLabel)
+            end
+
+            term.setBackgroundColor(colors.black)
             term.redirect(old)
             timerId = os.startTimer(config.system.tickRate)
         end
@@ -252,6 +271,10 @@ function console.runGame(game)
             old = term.redirect(gameWin)
             local gok, gerr = pcall(game.update, tickRate, input)
             if gok then
+                if gerr == "menu" then
+                    term.redirect(old)
+                    break
+                end
                 pcall(game.draw)
             end
             term.redirect(old)
@@ -319,12 +342,8 @@ function console.redstoneListener()
 end
 
 function console.runTestMode()
-    local testFile = config.system.gameDir .. "/" .. config.system.testGame .. ".lua"
-    if not fs.exists(testFile) then
-        print("Test game not found: " .. testFile)
-        return
-    end
-    local ok, game = pcall(dofile, testFile)
+    local modPath = config.system.gameDir .. "." .. config.system.testGame
+    local ok, game = pcall(require, modPath)
     if not ok or type(game) ~= "table" then
         print("Failed to load test game: " .. tostring(game))
         return

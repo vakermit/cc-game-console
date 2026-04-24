@@ -8,9 +8,11 @@ local invaderRows, invaderCols = 3, 8
 local invaderDir
 local invaderMoveTimer
 local invaderSpeed = 10
+local invaderOffsetX, invaderOffsetY
 local invaderBulletX, invaderBulletY
 local score
 local gameOver
+local gameOverTimer
 local tickCount
 
 function game.title()
@@ -24,19 +26,17 @@ function game.getControls()
     }
 end
 
-function game.init(console)
-    width = console.getWidth()
-    height = console.getHeight()
+local function initRound()
     playerX = math.floor(width / 2)
     playerY = height - 1
     bulletX = nil
     bulletY = nil
     invaderDir = 1
     invaderMoveTimer = 0
+    invaderOffsetX = 0
+    invaderOffsetY = 0
     invaderBulletX = nil
     invaderBulletY = nil
-    score = 0
-    gameOver = false
     tickCount = 0
 
     invaders = {}
@@ -48,11 +48,41 @@ function game.init(console)
     end
 end
 
+local function invaderScreenX(col)
+    return (col - 1) * 3 + 2 + invaderOffsetX
+end
+
+local function invaderScreenY(row)
+    return row + 2 + invaderOffsetY
+end
+
+function game.init(console)
+    width = console.getWidth()
+    height = console.getHeight()
+    score = 0
+    gameOver = false
+    gameOverTimer = 0
+    initRound()
+end
+
 function game.update(dt, input)
-    if gameOver then return end
+    local p1 = input.getPlayer(1)
+
+    if gameOver then
+        gameOverTimer = gameOverTimer + dt
+        if p1.wasPressed("action") then
+            score = 0
+            gameOver = false
+            gameOverTimer = 0
+            initRound()
+            return
+        elseif p1.wasPressed("alt") or gameOverTimer >= 10 then
+            return "menu"
+        end
+        return
+    end
 
     tickCount = tickCount + 1
-    local p1 = input.getPlayer(1)
 
     if p1.isDown("left") and playerX > 1 then
         playerX = playerX - 1
@@ -71,54 +101,51 @@ function game.update(dt, input)
             bulletX = nil
             bulletY = nil
         else
-            local row = bulletY - 2
-            local col = math.floor(bulletX / 2)
-            if row >= 1 and row <= invaderRows and col >= 1 and col <= invaderCols then
-                if invaders[row] and invaders[row][col] then
-                    invaders[row][col] = false
-                    bulletX = nil
-                    bulletY = nil
-                    score = score + 10
+            for row = 1, invaderRows do
+                for col = 1, invaderCols do
+                    if invaders[row][col] then
+                        local sx = invaderScreenX(col)
+                        local sy = invaderScreenY(row)
+                        if bulletY == sy and bulletX >= sx and bulletX <= sx + 1 then
+                            invaders[row][col] = false
+                            bulletX = nil
+                            bulletY = nil
+                            score = score + 10
+                            goto bullet_done
+                        end
+                    end
                 end
             end
+            ::bullet_done::
         end
     end
 
     invaderMoveTimer = invaderMoveTimer + 1
     if invaderMoveTimer >= invaderSpeed then
         invaderMoveTimer = 0
-        local shiftDown = false
 
+        local minCol, maxCol = invaderCols + 1, 0
         for row = 1, invaderRows do
             for col = 1, invaderCols do
                 if invaders[row][col] then
-                    local newCol = col + invaderDir
-                    if newCol < 1 or newCol > math.floor(width / 2) then
-                        shiftDown = true
-                        break
-                    end
+                    if col < minCol then minCol = col end
+                    if col > maxCol then maxCol = col end
                 end
             end
-            if shiftDown then break end
         end
 
-        if shiftDown then
-            invaderDir = -invaderDir
-        end
+        if maxCol >= minCol then
+            local leftEdge = invaderScreenX(minCol)
+            local rightEdge = invaderScreenX(maxCol) + 1
 
-        local startCol = invaderDir == 1 and invaderCols or 1
-        local endCol = invaderDir == 1 and 1 or invaderCols
-        local step = -invaderDir
-
-        for row = 1, invaderRows do
-            for col = startCol, endCol, step do
-                if invaders[row][col] then
-                    invaders[row][col] = false
-                    local newCol = col + invaderDir
-                    if newCol >= 1 and newCol <= invaderCols + 2 then
-                        invaders[row][newCol] = true
-                    end
-                end
+            if invaderDir == 1 and rightEdge + invaderDir >= width then
+                invaderDir = -1
+                invaderOffsetY = invaderOffsetY + 1
+            elseif invaderDir == -1 and leftEdge + invaderDir <= 1 then
+                invaderDir = 1
+                invaderOffsetY = invaderOffsetY + 1
+            else
+                invaderOffsetX = invaderOffsetX + invaderDir
             end
         end
     end
@@ -135,8 +162,8 @@ function game.update(dt, input)
         end
         if #shooters > 0 then
             local shooter = shooters[math.random(#shooters)]
-            invaderBulletX = shooter.col * 2
-            invaderBulletY = shooter.row + 3
+            invaderBulletX = invaderScreenX(shooter.col)
+            invaderBulletY = invaderScreenY(shooter.row) + 1
         end
     end
 
@@ -151,10 +178,11 @@ function game.update(dt, input)
     end
 
     for col = 1, invaderCols do
-        if invaders[invaderRows] and invaders[invaderRows][col] then
-            local invY = invaderRows + 2
-            if invY >= playerY - 1 then
-                gameOver = true
+        for row = invaderRows, 1, -1 do
+            if invaders[row][col] then
+                if invaderScreenY(row) >= playerY - 1 then
+                    gameOver = true
+                end
                 break
             end
         end
@@ -165,13 +193,15 @@ function game.update(dt, input)
         for col = 1, invaderCols do
             if invaders[row][col] then
                 alive = true
-                break
+                goto check_done
             end
         end
-        if alive then break end
     end
+    ::check_done::
+
     if not alive then
-        gameOver = true
+        initRound()
+        invaderSpeed = math.max(3, invaderSpeed - 1)
     end
 end
 
@@ -184,8 +214,12 @@ function game.draw()
     for row = 1, invaderRows do
         for col = 1, invaderCols do
             if invaders[row][col] then
-                term.setCursorPos(col * 2, row + 2)
-                term.write("W")
+                local sx = invaderScreenX(col)
+                local sy = invaderScreenY(row)
+                if sx >= 1 and sx <= width and sy >= 1 and sy <= height then
+                    term.setCursorPos(sx, sy)
+                    term.write("W")
+                end
             end
         end
     end
@@ -207,6 +241,11 @@ function game.draw()
         local msg = "GAME OVER - Score: " .. score
         term.setCursorPos(math.floor((width - #msg) / 2), math.floor(height / 2))
         term.write(msg)
+
+        local countdown = math.max(0, 10 - math.floor(gameOverTimer))
+        local hint = "[action] Restart  [alt] Menu  (" .. countdown .. ")"
+        term.setCursorPos(math.floor((width - #hint) / 2), math.floor(height / 2) + 2)
+        term.write(hint)
     end
 end
 

@@ -8,6 +8,7 @@ local current, currentX, currentY, currentColor
 local fallTimer, fallSpeed
 local score, level, lines
 local gameOver
+local gameOverTimer
 local tickAccum
 
 local pieces = {
@@ -106,6 +107,22 @@ function game.getControls()
     }
 end
 
+local function initBoard()
+    board = {}
+    for y = 1, boardH do
+        board[y] = {}
+        for x = 1, boardW do board[y][x] = false end
+    end
+    score = 0
+    level = 1
+    lines = 0
+    fallSpeed = 0.5
+    tickAccum = 0
+    gameOver = false
+    gameOverTimer = 0
+    spawn()
+end
+
 function game.init(console)
     width = console.getWidth()
     height = console.getHeight()
@@ -113,27 +130,23 @@ function game.init(console)
     boardH = height - 1
     boardX = math.floor((width - boardW) / 2)
 
-    board = {}
-    for y = 1, boardH do
-        board[y] = {}
-        for x = 1, boardW do board[y][x] = false end
-    end
-
-    score = 0
-    level = 1
-    lines = 0
-    fallSpeed = 0.5
-    tickAccum = 0
-    gameOver = false
-
     math.randomseed(os.clock() * 1000)
-    spawn()
+    initBoard()
 end
 
 function game.update(dt, input)
-    if gameOver then return end
-
     local p1 = input.getPlayer(1)
+
+    if gameOver then
+        gameOverTimer = gameOverTimer + dt
+        if p1.wasPressed("action") then
+            initBoard()
+            return
+        elseif p1.wasPressed("alt") or gameOverTimer >= 10 then
+            return "menu"
+        end
+        return
+    end
     tickAccum = tickAccum + dt
 
     if p1.wasPressed("left") then
@@ -201,7 +214,7 @@ function game.draw()
         term.setCursorPos(lx, y)
         term.setBackgroundColor(colors.gray)
         term.write(" ")
-        term.setCursorPos(rx + 1, y)
+        term.setCursorPos(rx, y)
         term.write(" ")
     end
     term.setCursorPos(lx, boardH + 1)
@@ -240,7 +253,7 @@ function game.draw()
     term.setBackgroundColor(colors.black)
     term.setTextColor(colors.white)
 
-    local infoX = rx + 3
+    local infoX = rx + 2
     if infoX + 10 <= width then
         term.setCursorPos(infoX, 2)
         term.write("Score")
@@ -265,8 +278,14 @@ function game.draw()
         term.setTextColor(colors.white)
         term.write(" " .. msg .. " ")
         term.setBackgroundColor(colors.black)
+        term.setTextColor(colors.white)
         term.setCursorPos(mx - 2, my + 1)
         term.write("Score: " .. score)
+
+        local countdown = math.max(0, 10 - math.floor(gameOverTimer))
+        local hint = "[action] Restart  [alt] Menu  (" .. countdown .. ")"
+        term.setCursorPos(math.floor((width - #hint) / 2), my + 3)
+        term.write(hint)
     end
 end
 
