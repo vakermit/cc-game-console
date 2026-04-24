@@ -6,7 +6,7 @@ vgame is a split-architecture game console. Physical input is captured by dedica
 
 ## Components
 
-### Transmitter (`rs_xmit.lua`)
+### Transmitter (`transmitter.lua`)
 
 Lightweight event-driven program. Monitors 4 redstone sides (top, left, right, back) for analog signal changes and broadcasts a message on each change containing the side name, signal strength, and the transmitter's computer ID.
 
@@ -52,7 +52,7 @@ Physical buttons/levers
  Redstone signal (analog 0-15)
         │
         ▼
- Transmitter computer (rs_xmit.lua)
+ Transmitter computer (transmitter.lua)
    Detects change on side → broadcasts modem message
         │
         ▼

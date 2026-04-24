@@ -13,7 +13,7 @@ Games are standalone Lua files that implement a simple interface (init, update, 
 ```
 vgame.lua            Main entry point - boots the console
 config.lua           Hardware mappings, network channel, system settings
-rs_xmit.lua          Signal transmitter program (runs on input computers)
+transmitter.lua      Signal transmitter program (runs on input computers)
 INTERFACE.md         Game developer interface specification
 lib/
   console.lua        Core console: menu, game loop, network/redstone listeners
@@ -27,7 +27,7 @@ games/
 
 ## Quick Start
 
-1. **Transmitter computers** - Place computers with wired modems, connect to network. Upload `rs_xmit.lua` and run it on each.
+1. **Transmitter computers** - Place computers with wired modems, connect to network. Upload `transmitter.lua` and run it on each.
 2. **Gaming computer** - Place a computer with an advanced monitor and wired modem on the same network. Upload all project files preserving the directory structure.
 3. **Configure** - Edit `config.lua` to map your transmitter computer IDs and redstone sides to player actions.
 4. **Run** - Execute `vgame` on the gaming computer.
@@ -43,7 +43,7 @@ shell.run("vgame")
 For transmitter computers:
 
 ```lua
-shell.run("rs_xmit")
+shell.run("transmitter")
 ```
 
 With startup files in place, the entire arcade boots itself when the Minecraft chunk loads. To bypass auto-start and get a shell prompt, hold **Ctrl+T** during boot.
@@ -58,7 +58,7 @@ Run `vgame --test` to launch an input test visualizer that shows the real-time s
 
 ## Writing Games
 
-See [INTERFACE.md](INTERFACE.md) for the full game API specification. The short version: create `games/game_yourname.lua`, return a table with `title()`, `init(console)`, `update(dt, input)`, `draw()`, and `cleanup()` methods. The file is auto-discovered on next boot.
+See [INTERFACE.md](docs/INTERFACE.md) for the full game API specification. The short version: create `games/game_yourname.lua`, return a table with `title()`, `init(console)`, `update(dt, input)`, `draw()`, and `cleanup()` methods. The file is auto-discovered on next boot.
 
 ## Documentation
 

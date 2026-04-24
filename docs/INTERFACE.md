@@ -56,7 +56,7 @@ return {
     end,
 ```
 
-## Network Message Format (rs_xmit.lua -> console)
+## Network Message Format (transmitter.lua -> console)
 
 Transmitters send on channel 123 (configurable in config.lua):
 ```lua
@@ -75,7 +75,7 @@ Run `vgame --test` to launch the input test visualizer. Shows real-time state of
 
 ## Hardware Setup
 
-- 4 transmitter computers: run rs_xmit.lua, wired to modem network (2 per player)
+- 4 transmitter computers: run transmitter.lua, wired to modem network (2 per player)
 - Each transmitter uses 4 redstone sides: top, left, right, back
 - 1 gaming computer: run vgame.lua, wired to same modem network
 - Power button: redstone signal on "top" side of gaming computer

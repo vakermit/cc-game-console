@@ -12,11 +12,11 @@
 
 ## Network
 
-All computers must be connected to the same wired modem network. Each transmitter and the gaming computer need a wired modem attached. The default communication channel is 123 (configurable in `config.lua`). Note: this needs to be manually changed in `rs_xmit.lua`
+All computers must be connected to the same wired modem network. Each transmitter and the gaming computer need a wired modem attached. The default communication channel is 123 (configurable in `config.lua`). Note: this needs to be manually changed in `transmitter.lua`
 
 ## Transmitter Computers
 
-Each transmitter runs `rs_xmit.lua` and monitors 4 redstone sides: **top, left, right, back** (front and bottom are not used).
+Each transmitter runs `transmitter.lua` and monitors 4 redstone sides: **top, left, right, back** (front and bottom are not used).
 
 > **Note:** ComputerCraft sides are from the **computer's own perspective**, not yours. The computer faces toward you when placed (screen side = front), so its "left" and "right" are **mirrored** from your view when looking at the screen — like facing another person. If inputs seem swapped, this is likely why. Use `vgame --test` to verify mappings.
 
@@ -105,14 +105,14 @@ Upload the following to the gaming computer, preserving directory structure:
 Upload to each transmitter:
 
 ```
-/rs_xmit.lua
+/transmitter.lua
 ```
 
 ## Testing
 
 After wiring everything up:
 
-1. Start `rs_xmit.lua` on each transmitter (they print debug messages on signal changes)
+1. Start `transmitter.lua` on each transmitter (it shows live redstone state on screen)
 2. Run `vgame --test` on the gaming computer to launch the input test visualizer
 3. Press each physical button and verify the correct indicator lights up on screen
 4. If a button maps to the wrong action, adjust `config.keyMappings` in `config.lua`
