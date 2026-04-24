@@ -18,6 +18,8 @@ All computers must be connected to the same wired modem network. Each transmitte
 
 Each transmitter runs `rs_xmit.lua` and monitors 4 redstone sides: **top, left, right, back** (front and bottom are not used).
 
+> **Note:** ComputerCraft sides are from the **computer's own perspective**, not yours. The computer faces toward you when placed (screen side = front), so its "left" and "right" are **mirrored** from your view when looking at the screen — like facing another person. If inputs seem swapped, this is likely why. Use `vgame --test` to verify mappings.
+
 ### Default Layout (3 transmitters)
 
 The default `config.lua` maps 3 transmitters:

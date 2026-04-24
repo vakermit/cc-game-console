@@ -12,17 +12,21 @@ config.system = {
     testGame = "game_test_inputs",
 }
 
+-- master computer have 2 redstone sides:
+--              reset left  ( black glazed terracotta in red / freq #1 slot and white wool in blue / freq #2 slot)
+--              power right ( black glazed terracotta in red / freq #1 slot and red wool in blue / freq #2 slot)
+
 config.redstone = {
     resetSide = "left",
     powerSide = "right",
     debounceTicks = 0.3,
 }
 
--- Player colors (Glazed Terracotta)
+-- Player colors (Glazed Terracotta in the blue / freq #2 slot)
 -- 1: Blue
 -- 2: Orange
 
--- Action colors (wool)
+-- Action colors (wool in the red / freq #1 slot)
 -- up: Yellow
 -- down: Green
 -- left: Blue
@@ -31,7 +35,9 @@ config.redstone = {
 -- alt: Black
 
 -- Redstone sides per transmitter: top, left, right, back (4 sides)
--- Each player needs 2 computers to cover all 6 inputs
+-- Each player needs 2.5 computers to cover all 6 inputs
+
+
 
 config.keyMappings = {
     [3] = {
