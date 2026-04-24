@@ -34,19 +34,19 @@ config.redstone = {
 -- Each player needs 2 computers to cover all 6 inputs
 
 config.keyMappings = {
-    [15] = {
+    [3] = {
         top   = "p1_up",
         left  = "p1_left",
         right = "p1_right",
         back  = "p1_down",
     },
-    [17] = {
+    [4] = {
         top   = "p1_action",
         back  = "p1_alt",
         left   = "p2_action",
         right  = "p2_alt",
     },
-    [16] = {
+    [5] = {
         top   = "p2_up",
         left  = "p2_left",
         right = "p2_right",
