@@ -1,8 +1,7 @@
-local input = require("lib.input")
-
 local game = {}
 
 local width, height
+local inp
 local actions = { "up", "down", "left", "right", "action", "alt" }
 
 function game.title()
@@ -14,7 +13,8 @@ function game.init(console)
     height = console.getHeight()
 end
 
-function game.update(dt, inp)
+function game.update(dt, input)
+    inp = input
 end
 
 local function drawIndicator(x, y, label, isDown)
@@ -35,6 +35,8 @@ local function drawIndicator(x, y, label, isDown)
 end
 
 function game.draw()
+    if not inp then return end
+
     term.setBackgroundColor(colors.black)
     term.setTextColor(colors.white)
     term.clear()
@@ -63,7 +65,7 @@ function game.draw()
         local y = startY + 3 + i
         local label = action .. ":"
         for _, p in ipairs(players) do
-            drawIndicator(p.x, y, label, input.isDown(p.prefix .. action))
+            drawIndicator(p.x, y, label, inp.isDown(p.prefix .. action))
         end
     end
 

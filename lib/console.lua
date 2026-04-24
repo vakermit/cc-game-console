@@ -5,6 +5,7 @@ local block_letters = require("lib.block_letters")
 local console = {}
 
 local statusWin, gameWin
+local originalTerm
 local consoleWidth, consoleHeight
 local running = true
 local resetFlag = false
@@ -14,6 +15,12 @@ local lastPowerTime = 0
 
 function console.init()
     input.init()
+
+    originalTerm = term.current()
+    local monitor = peripheral.find("monitor")
+    if monitor then
+        term.redirect(monitor)
+    end
 
     local w, h = term.getSize()
     statusWin = window.create(term.current(), 1, 1, w, 1)
@@ -327,6 +334,9 @@ function console.shutdown()
     term.setCursorPos(1, 1)
     term.write("Goodbye.")
     term.redirect(old)
+    if originalTerm then
+        term.redirect(originalTerm)
+    end
 end
 
 return console
