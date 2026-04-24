@@ -1,0 +1,52 @@
+MIT License
+
+Copyright (c) 2025 VA Kermit inc.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+SAMPLE GAMES DISCLAIMER
+
+The game implementations included in this repository (located in the "games/"
+directory) are independent, original works created solely as sample
+demonstrations of the vgame game console platform. They are provided for
+educational and personal, non-commercial use.
+
+These sample games implement generic, unprotectable game mechanics (such as
+bouncing a ball between paddles, or shooting at descending rows of enemies)
+that have existed in the public domain of game design for decades. They are
+not copies, ports, adaptations, or derivative works of any specific commercial
+video game product.
+
+No proprietary source code, game assets, trade dress, character designs,
+audiovisual elements, or trademarks belonging to any third party have been
+used in the creation of these samples. Any similarity to existing commercial
+games is attributable solely to the use of common, generic game design
+patterns and mechanics.
+
+The names used for these sample games within this repository (e.g., "Pong",
+"Space Invaders") are used descriptively to identify the genre of gameplay
+demonstrated. If any such name constitutes a trademark of a third party, its
+use here is purely descriptive and nominative, and no sponsorship, affiliation,
+or endorsement by the trademark holder is implied.
+
+THE SAMPLE GAMES ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. THE
+AUTHOR ASSUMES NO LIABILITY FOR ANY CLAIMS ARISING FROM THE USE OR
+DISTRIBUTION OF THESE SAMPLES.
