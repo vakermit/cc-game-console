@@ -86,10 +86,9 @@ end
 
 function game.getControls()
     return {
-        { action = "left/right", description = "Change bet" },
+        { action = "left/right", description = "Bet +/-10" },
+        { action = "up/down",    description = "Bet +/-100" },
         { action = "action",     description = "Deal / New round" },
-        { action = "up",         description = "Hit" },
-        { action = "down",       description = "Stand" },
         { action = "alt",        description = "Surrender" },
     }
 end
@@ -110,6 +109,10 @@ function game.update(dt, input)
             bet = math.max(BET_MIN, bet - BET_STEP)
         elseif p1.wasPressed("right") then
             bet = math.min(math.min(BET_MAX, balance), bet + BET_STEP)
+        elseif p1.wasPressed("down") then
+            bet = math.max(BET_MIN, bet - 100)
+        elseif p1.wasPressed("up") then
+            bet = math.min(math.min(BET_MAX, balance), bet + 100)
         end
         if p1.wasPressed("action") and bet <= balance and balance > 0 then
             deal()
@@ -209,7 +212,6 @@ function game.draw()
 
     if phase == "betting" then
         local betStr = "Bet: $" .. bet
-        term.setTextColor(colors.white)
         local betX = math.floor((width - #betStr - 6) / 2)
         term.setCursorPos(betX, midY + 1)
         term.setTextColor(colors.lightGray)
@@ -218,13 +220,53 @@ function game.draw()
         term.write(betStr)
         term.setTextColor(colors.lightGray)
         term.write(" >")
+        term.setCursorPos(2, height)
+        term.setTextColor(colors.lightGray)
+        term.write("[")
+        term.setTextColor(colors.white)
+        term.write("<> ")
+        term.setTextColor(colors.lightGray)
+        term.write("$10  ")
+        term.write("[")
+        term.setTextColor(colors.white)
+        term.write("v^ ")
+        term.setTextColor(colors.lightGray)
+        term.write("$100  ")
+        term.write("[")
+        term.setTextColor(colors.white)
+        term.write("action")
+        term.setTextColor(colors.lightGray)
+        term.write("] Deal")
+    end
+
+    if phase == "player" then
+        term.setCursorPos(2, height)
+        term.setBackgroundColor(colors.green)
+        term.setTextColor(colors.lightGray)
+        term.write("[")
+        term.setTextColor(colors.lime)
+        term.write("up")
+        term.setTextColor(colors.lightGray)
+        term.write("] Hit  [")
+        term.setTextColor(colors.yellow)
+        term.write("down")
+        term.setTextColor(colors.lightGray)
+        term.write("] Stand  [")
+        term.setTextColor(colors.red)
+        term.write("alt")
+        term.setTextColor(colors.lightGray)
+        term.write("] Surrender")
     end
 
     if phase == "done" then
-        local hint = "[action] Next round"
+        term.setCursorPos(2, height)
+        term.setBackgroundColor(colors.green)
         term.setTextColor(colors.lightGray)
-        term.setCursorPos(math.floor((width - #hint) / 2), midY + 2)
-        term.write(hint)
+        term.write("[")
+        term.setTextColor(colors.white)
+        term.write("action")
+        term.setTextColor(colors.lightGray)
+        term.write("] Next round")
     end
 end
 
