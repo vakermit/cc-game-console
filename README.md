@@ -20,9 +20,11 @@ transmitter.lua      Signal transmitter program (runs on input computers)
 lib/
   console.lua        Core console: menu, game loop, network/redstone listeners
   input.lua          Input state machine (held/pressed/released per action)
+  sound.lua          Queue-based audio system (notes, sounds, DFPWM streaming)
   block_letters.lua  5x5 bitmap font renderer for title screens
   cards.lua          Card deck/hand management and rendering
   screen.lua         Shared utilities for screensaver modules
+sounds/              DFPWM audio files for game music and effects
 screens/
   screen_ball.lua    Bouncing ball with color-changing trail
   screen_cat.lua     Wandering ASCII cat with blinking eyes
@@ -32,10 +34,13 @@ games/
   game_blackjack.lua Blackjack - single player card game
   game_blocks.lua    Falling Blocks - single player puzzle
   game_invaders.lua  Space Invaders - single player shooter
+  game_jurassic.lua  Jurassic Trail - survival narrative
   game_paku.lua      Paku Paku - single player maze chase
   game_pong.lua      Pong - 2 player paddle game
   game_road_racer.lua Road Racer - single player top-down racer
-  game_test_inputs.lua Input test visualizer (launched via --test flag)
+  game_trek.lua      Star Trek - tactical space combat
+  game_test_inputs.lua Input test visualizer (--test flag)
+  game_test_audio.lua  Audio test tool (--test-audio flag)
 ```
 
 ## Quick Start
@@ -79,6 +84,7 @@ Additional documentation is in the [docs/](docs/) directory:
 
 - [Architecture](docs/architecture.md) - System design and data flow
 - [Hardware Setup](docs/hardware.md) - Physical build guide and wiring
+- [Sound System](docs/sound.md) - Audio API, DFPWM files, and ffmpeg conversion
 
 ## Disclaimer
 

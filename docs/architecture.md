@@ -14,11 +14,12 @@ Each player needs 2 transmitter computers to cover all 6 actions (4 sides per co
 
 ### Gaming Computer (`vgame.lua`)
 
-Entry point that boots the console and runs three coroutines in parallel:
+Entry point that boots the console and runs four coroutines in parallel:
 
 1. **Main loop** - Menu display, game selection, game execution
 2. **Network listener** - Receives modem messages and maps them to input actions via `config.keyMappings`
 3. **Redstone listener** - Monitors local redstone for reset and power-off signals
+4. **Sound listener** - Processes the audio queue (notes, sounds, DFPWM files) via the speaker peripheral
 
 ### Console (`lib/console.lua`)
 
@@ -38,6 +39,10 @@ Stateful input manager with per-tick edge detection:
 - `tick()` - Computes pressed/released edges from current vs. previous state
 - `isDown(action)` / `wasPressed(action)` / `wasReleased(action)` - Queried by games
 - `getPlayer(n)` - Returns a scoped interface that auto-prefixes actions with `pN_`
+
+### Sound (`lib/sound.lua`)
+
+Queue-based audio system. Games call `playNote`, `playSound`, `playNotes`, or `playFile` to enqueue audio. The listener coroutine processes the queue in the background, yielding between items. Supports CC:T note block instruments, Minecraft sound resources, melodies, and DFPWM file streaming. See [Sound System](sound.md) for full API reference.
 
 ### Block Letters (`lib/block_letters.lua`)
 
