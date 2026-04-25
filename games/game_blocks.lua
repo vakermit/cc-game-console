@@ -101,9 +101,8 @@ end
 function game.getControls()
     return {
         { action = "left/right", description = "Move" },
-        { action = "down",       description = "Soft drop" },
-        { action = "action",     description = "Rotate" },
-        { action = "alt",        description = "Hard drop" },
+        { action = "down",       description = "Rotate" },
+        { action = "action",     description = "Speed drop" },
     }
 end
 
@@ -159,37 +158,21 @@ function game.update(dt, input)
         end
     end
 
-    if p1.wasPressed("action") then
+    if p1.wasPressed("down") then
         local rotated = rotate(current)
         if fits(rotated, currentX, currentY) then
             current = rotated
         end
     end
 
-    if p1.wasPressed("alt") then
-        while fits(current, currentX, currentY + 1) do
-            currentY = currentY + 1
-            score = score + 1
-        end
-        lock()
-        local cleared = clearLines()
-        lines = lines + cleared
-        score = score + ({0, 100, 300, 500, 800})[cleared + 1] * level
-        level = math.floor(lines / 10) + 1
-        fallSpeed = math.max(0.05, 0.5 - (level - 1) * 0.04)
-        spawn()
-        tickAccum = 0
-        return
-    end
-
     local speed = fallSpeed
-    if p1.isDown("down") then speed = 0.05 end
+    if p1.isDown("action") then speed = 0.05 end
 
     if tickAccum >= speed then
         tickAccum = tickAccum - speed
         if fits(current, currentX, currentY + 1) then
             currentY = currentY + 1
-            if p1.isDown("down") then score = score + 1 end
+            if p1.isDown("action") then score = score + 1 end
         else
             lock()
             local cleared = clearLines()
