@@ -1,6 +1,27 @@
+local nativeTerm = term.current()
+
+local function status(msg)
+    local old = term.redirect(nativeTerm)
+    term.setBackgroundColor(colors.black)
+    term.setTextColor(colors.white)
+    term.clear()
+    term.setCursorPos(1, 1)
+    term.setTextColor(colors.yellow)
+    term.write("cc-game-console")
+    term.setCursorPos(1, 3)
+    term.setTextColor(colors.white)
+    term.write(msg)
+    term.setCursorPos(1, 5)
+    term.setTextColor(colors.lightGray)
+    term.write("Ctrl+T to exit to shell")
+    term.redirect(old)
+end
+
+sleep(30)
 while true do
-    local ok = pcall(shell.run, "screensaver")
-    if not ok then break end
+    status("Starting screensaver...")
+    shell.run("screensaver")
+    sleep(1)
 
     -- Clear require cache so modules re-initialize (e.g. console's running=true)
     for name in pairs(package.loaded) do
@@ -9,6 +30,7 @@ while true do
         end
     end
 
-    local ok2 = pcall(shell.run, "vgame")
-    if not ok2 then break end
+    status("Starting game console...")
+    shell.run("vgame")
+    sleep(1)
 end

@@ -3,6 +3,8 @@ local cfg = config.screensaver
 
 local args = { ... }
 
+local nativeTerm = term.current()
+
 local function discoverScreens()
     local dir = cfg.screenDir
     local prefix = cfg.screenPrefix
@@ -31,6 +33,15 @@ end
 local function randomDuration()
     local delta = math.random(0, cfg.deltaTime * 2) - cfg.deltaTime
     return math.max(cfg.minTime, cfg.baseTime + delta)
+end
+
+local function pickNext(screens, current)
+    if #screens <= 1 then return 1 end
+    local next
+    repeat
+        next = math.random(#screens)
+    until next ~= current
+    return next
 end
 
 local screens = discoverScreens()
@@ -77,19 +88,54 @@ if modem then
 end
 
 local monitor = peripheral.find("monitor")
-local output = monitor or term.current()
+local output = monitor or nativeTerm
 term.redirect(output)
 
 local w, h = term.getSize()
 math.randomseed(os.clock() * 1000)
 
 local current = singleMode or math.random(#screens)
+local nextScr = singleMode and current or pickNext(screens, current)
 screens[current].init(w, h)
 
 local modeTimer = 0
 local modeDuration = singleMode and math.huge or randomDuration()
 local tickRate = cfg.tickRate
 local timer = os.startTimer(tickRate)
+local lastStatusUpdate = -999
+
+local function updateStatus()
+    local old = term.redirect(nativeTerm)
+    term.setBackgroundColor(colors.black)
+    term.setTextColor(colors.white)
+    term.clear()
+    term.setCursorPos(1, 1)
+    term.setTextColor(colors.yellow)
+    term.write("Screensaver")
+    term.setCursorPos(1, 3)
+    term.setTextColor(colors.lightGray)
+    term.write("Now: ")
+    term.setTextColor(colors.white)
+    term.write(screens[current].title())
+    if not singleMode then
+        local remaining = math.max(0, math.floor(modeDuration - modeTimer))
+        local mins = math.floor(remaining / 60)
+        local secs = remaining % 60
+        term.setCursorPos(1, 4)
+        term.setTextColor(colors.lightGray)
+        term.write("Time: ")
+        term.setTextColor(colors.white)
+        term.write(string.format("%d:%02d", mins, secs))
+        term.setCursorPos(1, 5)
+        term.setTextColor(colors.lightGray)
+        term.write("Next: ")
+        term.setTextColor(colors.white)
+        term.write(screens[nextScr].title())
+    end
+    term.redirect(old)
+end
+
+updateStatus()
 
 local running = true
 while running do
@@ -100,17 +146,21 @@ while running do
 
         if modeTimer >= modeDuration then
             modeTimer = 0
-            local next
-            repeat
-                next = math.random(#screens)
-            until next ~= current or #screens == 1
-            current = next
+            current = nextScr
             screens[current].init(w, h)
+            nextScr = pickNext(screens, current)
             modeDuration = randomDuration()
+            lastStatusUpdate = -999
         end
 
         screens[current].update()
         screens[current].draw()
+
+        local elapsed = math.floor(modeTimer)
+        if elapsed - lastStatusUpdate >= 60 or lastStatusUpdate < 0 then
+            lastStatusUpdate = elapsed
+            updateStatus()
+        end
 
         timer = os.startTimer(tickRate)
 
@@ -130,6 +180,9 @@ while running do
     end
 end
 
+if monitor then
+    term.redirect(nativeTerm)
+end
 term.setBackgroundColor(colors.black)
 term.setTextColor(colors.white)
 term.clear()

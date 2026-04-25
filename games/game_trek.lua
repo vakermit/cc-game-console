@@ -249,10 +249,10 @@ function game.update(dt, input)
     end
 
     if mode == "main" then
-        if p1.wasPressed("up") then
+        if p1.wasPressed("left") then
             selected = selected - 1
             if selected < 1 then selected = #modeNames end
-        elseif p1.wasPressed("down") then
+        elseif p1.wasPressed("right") then
             selected = selected + 1
             if selected > #modeNames then selected = 1 end
         elseif p1.wasPressed("action") then
@@ -564,41 +564,37 @@ function game.draw()
     drawSector(sectorOX, sectorOY, SZ)
 
     local infoX = sectorOX + SZ * 2 + 2
-    local iy = 2
 
-    term.setCursorPos(infoX, iy)
+    term.setCursorPos(infoX, 2)
     term.setTextColor(colors.yellow)
     term.write("Q:" .. playerQX .. "," .. playerQY)
-    iy = iy + 1
 
-    term.setCursorPos(infoX, iy)
+    term.setCursorPos(infoX, 3)
     term.setTextColor(colors.lime)
     term.write("E:" .. energy)
-    iy = iy + 1
 
-    term.setCursorPos(infoX, iy)
+    term.setCursorPos(infoX, 4)
     term.setTextColor(colors.cyan)
     term.write("S:" .. shields)
-    iy = iy + 1
 
-    term.setCursorPos(infoX, iy)
+    term.setCursorPos(infoX, 5)
     term.setTextColor(colors.orange)
     term.write("T:" .. torpedoes)
-    iy = iy + 1
 
-    term.setCursorPos(infoX, iy)
+    term.setCursorPos(infoX, 6)
     term.setTextColor(colors.red)
     term.write("K:" .. klingonsLeft)
-    iy = iy + 1
 
-    term.setCursorPos(infoX, iy)
+    term.setCursorPos(infoX, 7)
     term.setTextColor(colors.lightGray)
     term.write("D:" .. string.format("%.1f", maxStardate - stardate))
-    iy = iy + 2
+
+    local cmdY = sectorOY + SZ + 1
 
     if mode == "main" then
         for i, label in ipairs(modeLabels) do
-            term.setCursorPos(infoX, iy)
+            local cx = 2 + (i - 1) * 5
+            term.setCursorPos(cx, cmdY)
             if i == selected then
                 term.setBackgroundColor(colors.gray)
                 term.setTextColor(colors.white)
@@ -606,43 +602,37 @@ function game.draw()
                 term.setBackgroundColor(colors.black)
             else
                 term.setTextColor(colors.lightGray)
-                term.write(" " .. label)
+                term.write(label)
             end
-            iy = iy + 1
         end
     end
 
+    local panelY = cmdY + 2
+
     if mode == "phasers" then
-        term.setCursorPos(infoX, iy)
+        term.setCursorPos(2, panelY)
         term.setTextColor(colors.yellow)
-        term.write("Phaser: " .. selected)
-        iy = iy + 1
-        term.setCursorPos(infoX, iy)
+        term.write("Phaser energy: " .. selected)
+        term.setCursorPos(2, panelY + 1)
         term.setTextColor(colors.lightGray)
-        term.write("v^ 100 <> 25")
+        term.write("[v^] +/-100  [<>] +/-25  [action] Fire")
     end
 
     if mode == "shields" then
-        term.setCursorPos(infoX, iy)
+        term.setCursorPos(2, panelY)
         term.setTextColor(colors.cyan)
-        term.write("Shields: " .. selected)
-        iy = iy + 1
-        term.setCursorPos(infoX, iy)
+        term.write("Shields: " .. selected .. "  Energy: " .. (energy + shields - selected))
+        term.setCursorPos(2, panelY + 1)
         term.setTextColor(colors.lightGray)
-        term.write("E:" .. (energy + shields - selected))
-        iy = iy + 1
-        term.setCursorPos(infoX, iy)
-        term.write("v^ 100 <> 25")
+        term.write("[v^] +/-100  [<>] +/-25  [action] Set")
     end
 
     if mode == "scan" then
-        local scanOX = infoX
-        local scanOY = iy
         for dy = -1, 1 do
             for dx = -1, 1 do
                 local qx = playerQX + dx
                 local qy = playerQY + dy
-                term.setCursorPos(scanOX + (dx + 1) * 5, scanOY + dy + 1)
+                term.setCursorPos(2 + (dx + 1) * 5, panelY + dy + 1)
                 if qx >= 1 and qx <= SZ and qy >= 1 and qy <= SZ then
                     local gq = galaxy[qy][qx]
                     gq.scanned = true
@@ -661,14 +651,15 @@ function game.draw()
                 end
             end
         end
+        term.setCursorPos(18, panelY + 1)
+        term.setTextColor(colors.gray)
+        term.write("KBS = Klingons/Bases/Stars")
     end
 
     if mode == "warp" then
-        local mapOX = infoX
-        local mapOY = iy
         for qy = 1, SZ do
             for qx = 1, SZ do
-                term.setCursorPos(mapOX + (qx - 1) * 2, mapOY + qy - 1)
+                term.setCursorPos(infoX + (qx - 1) * 2, sectorOY + qy - 1)
                 local gq = galaxy[qy][qx]
                 if qx == playerQX and qy == playerQY then
                     term.setTextColor(colors.lime)
@@ -688,8 +679,8 @@ function game.draw()
                 end
             end
         end
-        local cx = mapOX + (cursorX - 1) * 2
-        local cy = mapOY + cursorY - 1
+        local cx = infoX + (cursorX - 1) * 2
+        local cy = sectorOY + cursorY - 1
         term.setCursorPos(cx - 1, cy)
         term.setTextColor(colors.yellow)
         term.write("[")
@@ -698,13 +689,12 @@ function game.draw()
 
         local d = dist(playerQX, playerQY, cursorX, cursorY)
         local cost = math.floor(d * 200)
-        term.setCursorPos(mapOX, mapOY + SZ)
+        term.setCursorPos(2, panelY)
         term.setTextColor(colors.lightGray)
-        term.write("Cost: " .. cost .. "E")
+        term.write("Warp to [" .. cursorX .. "," .. cursorY .. "]  Cost: " .. cost .. " energy")
     end
 
-    local msgY = sectorOY + SZ + 1
-    if msgY > height then msgY = height end
+    local msgY = cmdY + 4
     term.setTextColor(colors.white)
     for i, line in ipairs(messageLines) do
         if msgY + i - 1 <= height then
