@@ -69,6 +69,10 @@ config.actions = {
     back_ticks  = 20,
 }
 
+config.sound = {
+    enabled = true,
+}
+
 config.screensaver = {
     screenDir = "screens",
     screenPrefix = "screen_",

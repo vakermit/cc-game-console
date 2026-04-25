@@ -1,13 +1,17 @@
 local console = require("lib.console")
 local config = require("config")
+local sound = require("lib.sound")
 
 local args = { ... }
 
+sound.init()
 console.init()
 
 local function mainLoop()
     if args[1] == "--test" then
-        console.runTestMode()
+        console.runTestMode("game_test_inputs")
+    elseif args[1] == "--test-audio" then
+        console.runTestMode("game_test_audio")
     else
         local games = console.discoverGames()
 
@@ -32,7 +36,8 @@ end
 parallel.waitForAny(
     mainLoop,
     console.networkListener,
-    console.redstoneListener
+    console.redstoneListener,
+    sound.listener
 )
 
 term.setBackgroundColor(colors.black)

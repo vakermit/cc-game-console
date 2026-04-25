@@ -1,6 +1,7 @@
 local input = require("lib.input")
 local config = require("config")
 local block_letters = require("lib.block_letters")
+local sound = require("lib.sound")
 
 local console = {}
 
@@ -73,12 +74,11 @@ function console.discoverGames()
         return games
     end
 
-    local testGame = config.system.testGame
     local files = fs.list(gameDir)
     for _, file in ipairs(files) do
         if file:sub(1, #prefix) == prefix and file:sub(-4) == ".lua" then
             local name = file:sub(1, -5)
-            if name ~= testGame then
+            if not name:find("_test_") then
                 local modPath = gameDir .. "." .. name
                 local ok, game = pcall(require, modPath)
                 if ok and type(game) == "table" and type(game.title) == "function" then
@@ -113,10 +113,13 @@ function console.showMenu(games)
             if input.wasPressed(config.actions.menu_up) then
                 selected = selected - 1
                 if selected < 1 then selected = totalItems end
+                sound.menuBeep()
             elseif input.wasPressed(config.actions.menu_down) then
                 selected = selected + 1
                 if selected > totalItems then selected = 1 end
+                sound.menuBeep()
             elseif input.wasPressed(config.actions.menu_select) then
+                sound.menuSelect()
                 if selected == totalItems then
                     return nil
                 end
@@ -171,11 +174,6 @@ end
 local function showTitleScreen(game)
     drawStatus(game.title())
 
-    local old = term.redirect(gameWin)
-    term.setBackgroundColor(colors.black)
-    term.setTextColor(colors.white)
-    term.clear()
-
     local gw, gh = gameWin.getSize()
     local title = game.title():upper()
     local words = {}
@@ -183,41 +181,85 @@ local function showTitleScreen(game)
         table.insert(words, word)
     end
 
-    local lineHeight = 6
-    local totalHeight = #words * lineHeight - 1
-    local ty = math.max(1, math.floor((gh - totalHeight) / 2) - 2)
-
-    for i, word in ipairs(words) do
-        local wordW = block_letters.width(word)
-        local wx = math.max(1, math.floor((gw - wordW) / 2) + 1)
-        local wy = ty + (i - 1) * lineHeight
-        block_letters.draw(wx, wy, word)
-    end
-
-    local belowTitle = ty + totalHeight + 2
-    local prompt = "Press any button to start"
-    term.setCursorPos(math.floor((gw - #prompt) / 2) + 1, belowTitle)
-    term.write(prompt)
-
-    if game.getControls then
-        local controls = game.getControls()
-        local cy = belowTitle + 2
-        for _, ctrl in ipairs(controls) do
-            local line = ctrl.action .. " - " .. ctrl.description
-            term.setCursorPos(math.floor((gw - #line) / 2) + 1, cy)
-            term.write(line)
-            cy = cy + 1
-        end
-    end
-
-    term.redirect(old)
-
+    local titleSel = 1
     local timerId = os.startTimer(config.system.tickRate)
+
     while running and not resetFlag and not powerFlag do
         local event, p1 = os.pullEvent()
         if event == "timer" and p1 == timerId then
             input.tick()
-            if input.anyPressed() then return true end
+
+            if input.wasPressed(config.actions.menu_down) then
+                titleSel = titleSel == 1 and 2 or 1
+                sound.menuBeep()
+            elseif input.wasPressed(config.actions.menu_up) then
+                titleSel = titleSel == 1 and 2 or 1
+                sound.menuBeep()
+            elseif input.wasPressed(config.actions.menu_select) then
+                if titleSel == 1 then
+                    sound.menuSelect()
+                    return true
+                else
+                    sound.setEnabled(not sound.isEnabled())
+                    sound.menuBeep()
+                end
+            end
+
+            local old = term.redirect(gameWin)
+            term.setBackgroundColor(colors.black)
+            term.setTextColor(colors.white)
+            term.clear()
+
+            local lineHeight = 6
+            local totalHeight = #words * lineHeight - 1
+            local ty = math.max(1, math.floor((gh - totalHeight) / 2) - 4)
+
+            for i, word in ipairs(words) do
+                local wordW = block_letters.width(word)
+                local wx = math.max(1, math.floor((gw - wordW) / 2) + 1)
+                local wy = ty + (i - 1) * lineHeight
+                block_letters.draw(wx, wy, word)
+            end
+
+            local menuY = ty + totalHeight + 2
+
+            local playLabel = "Play"
+            term.setCursorPos(math.floor((gw - #playLabel) / 2), menuY)
+            if titleSel == 1 then
+                term.setBackgroundColor(colors.white)
+                term.setTextColor(colors.black)
+                term.write(" " .. playLabel .. " ")
+                term.setBackgroundColor(colors.black)
+            else
+                term.setTextColor(colors.white)
+                term.write(playLabel)
+            end
+
+            local soundLabel = "Sound: " .. (sound.isEnabled() and "ON" or "OFF")
+            term.setCursorPos(math.floor((gw - #soundLabel) / 2), menuY + 1)
+            if titleSel == 2 then
+                term.setBackgroundColor(colors.white)
+                term.setTextColor(colors.black)
+                term.write(" " .. soundLabel .. " ")
+                term.setBackgroundColor(colors.black)
+            else
+                term.setTextColor(colors.gray)
+                term.write(soundLabel)
+            end
+
+            if game.getControls then
+                local controls = game.getControls()
+                local cy = menuY + 3
+                term.setTextColor(colors.lightGray)
+                for _, ctrl in ipairs(controls) do
+                    local line = ctrl.action .. " - " .. ctrl.description
+                    term.setCursorPos(math.floor((gw - #line) / 2) + 1, cy)
+                    term.write(line)
+                    cy = cy + 1
+                end
+            end
+
+            term.redirect(old)
             timerId = os.startTimer(config.system.tickRate)
         end
     end
@@ -341,8 +383,8 @@ function console.redstoneListener()
     end
 end
 
-function console.runTestMode()
-    local modPath = config.system.gameDir .. "." .. config.system.testGame
+function console.runTestMode(testName)
+    local modPath = config.system.gameDir .. "." .. testName
     local ok, game = pcall(require, modPath)
     if not ok or type(game) ~= "table" then
         print("Failed to load test game: " .. tostring(game))

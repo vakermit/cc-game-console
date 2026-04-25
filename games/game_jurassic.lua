@@ -1,3 +1,5 @@
+local sound = require("lib.sound")
+
 local game = {}
 
 local width, height
@@ -892,11 +894,34 @@ function game.getControls()
     }
 end
 
+local function playIntroTheme()
+    if fs.exists("sounds/jurassic.dfpwm") then
+        sound.playFile("jurassic.dfpwm", 1.0)
+    else
+        sound.playNotes({
+            { instrument = "harp", pitch = 12, rest = 4 },
+            { instrument = "harp", pitch = 14, rest = 4 },
+            { instrument = "harp", pitch = 12, rest = 6 },
+            { instrument = "harp", pitch = 7,  rest = 8 },
+            { instrument = "harp", pitch = 12, rest = 4 },
+            { instrument = "harp", pitch = 14, rest = 4 },
+            { instrument = "harp", pitch = 12, rest = 6 },
+            { instrument = "harp", pitch = 7,  rest = 8 },
+            { instrument = "harp", pitch = 12, rest = 4 },
+            { instrument = "harp", pitch = 14, rest = 4 },
+            { instrument = "harp", pitch = 17, rest = 4 },
+            { instrument = "harp", pitch = 19, rest = 6 },
+            { instrument = "bell", pitch = 19, rest = 8 },
+        }, 3)
+    end
+end
+
 function game.init(console)
     width = console.getWidth()
     height = console.getHeight()
     math.randomseed(os.clock() * 1000)
     initGame()
+    playIntroTheme()
 end
 
 function game.update(dt, input)
@@ -930,6 +955,7 @@ function game.update(dt, input)
             selected = selected + 1
             if selected > #difficulties then selected = 1 end
         elseif p1.wasPressed("action") then
+            sound.stop()
             applyDifficulty(selected)
             state = "pace"
             selected = pace
@@ -1022,9 +1048,9 @@ function game.draw()
     local header = "Day " .. day .. "  |  " .. distance .. " mi left"
     term.write(header)
 
+    term.setBackgroundColor(colors.black)
     if difficulty then
         local resY = 2
-        term.setBackgroundColor(colors.black)
         drawBar(2, resY, "Fuel", fuel, 30, fuel > 8 and colors.lime or fuel > 3 and colors.yellow or colors.red)
         drawBar(14, resY, "Food", food, 25, food > 8 and colors.lime or food > 3 and colors.yellow or colors.red)
         drawBar(26, resY, "Ammo", ammo, 10, colors.cyan)
@@ -1239,6 +1265,7 @@ function game.draw()
 end
 
 function game.cleanup()
+    sound.stop()
 end
 
 return game
