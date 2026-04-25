@@ -27,78 +27,84 @@ local function makeRoom(name, color, walls, gates, roomItems, desc)
     }
 end
 
+local function px(frac) return math.floor(frac * width + 0.5) end
+local function py(frac) return math.floor(frac * height + 0.5) end
+
 local function initRooms()
+    local mid = py(0.5)
+    local midX = px(0.5)
+
     rooms = {
         castle = makeRoom("Gold Castle", colors.yellow, {}, {
-            { x = 20, y = 1, dir = "up", dest = "courtyard", dx = 20, dy = nil },
+            { x = midX, y = 2, dir = "up", dest = "courtyard", dx = midX, dy = nil },
         }, {}, "Your quest begins here."),
 
         courtyard = makeRoom("Courtyard", colors.green, {}, {
-            { x = 20, y = nil, dir = "down", dest = "castle", dx = 20, dy = 2 },
-            { x = 1, y = 8, dir = "left", dest = "forest", dx = nil, dy = 8 },
-            { x = nil, y = 8, dir = "right", dest = "maze1", dx = 2, dy = 8 },
-            { x = 20, y = 1, dir = "up", dest = "mountain", dx = 20, dy = nil },
-        }, { { item = "sword", x = 10, y = 6 } }),
+            { x = midX, y = nil, dir = "down", dest = "castle", dx = midX, dy = 3 },
+            { x = 1, y = mid, dir = "left", dest = "forest", dx = nil, dy = mid },
+            { x = nil, y = mid, dir = "right", dest = "maze1", dx = 2, dy = mid },
+            { x = midX, y = 2, dir = "up", dest = "mountain", dx = midX, dy = nil },
+        }, { { item = "sword", x = px(0.3), y = py(0.4) } }),
 
         forest = makeRoom("Dark Forest", colors.green, {
-            { x1 = 8, y1 = 4, x2 = 8, y2 = 10 },
-            { x1 = 15, y1 = 3, x2 = 15, y2 = 7 },
-            { x1 = 25, y1 = 6, x2 = 25, y2 = 12 },
+            { x1 = px(0.2), y1 = py(0.25), x2 = px(0.2), y2 = py(0.7) },
+            { x1 = px(0.45), y1 = py(0.2), x2 = px(0.45), y2 = py(0.5) },
+            { x1 = px(0.7), y1 = py(0.4), x2 = px(0.7), y2 = py(0.8) },
         }, {
-            { x = nil, y = 8, dir = "right", dest = "courtyard", dx = 2, dy = 8 },
-            { x = 1, y = 5, dir = "left", dest = "dark_castle", dx = nil, dy = 5 },
-        }, { { item = "key_gold", x = 30, y = 10 } }),
+            { x = nil, y = mid, dir = "right", dest = "courtyard", dx = 2, dy = mid },
+            { x = 1, y = py(0.35), dir = "left", dest = "dark_castle", dx = nil, dy = py(0.35) },
+        }, { { item = "key_gold", x = px(0.85), y = py(0.7) } }),
 
         maze1 = makeRoom("Maze", colors.gray, {
-            { x1 = 5, y1 = 3, x2 = 5, y2 = 8 },
-            { x1 = 5, y1 = 8, x2 = 15, y2 = 8 },
-            { x1 = 10, y1 = 3, x2 = 10, y2 = 6 },
-            { x1 = 15, y1 = 5, x2 = 15, y2 = 12 },
-            { x1 = 20, y1 = 3, x2 = 20, y2 = 8 },
-            { x1 = 20, y1 = 8, x2 = 30, y2 = 8 },
-            { x1 = 25, y1 = 10, x2 = 25, y2 = 14 },
+            { x1 = px(0.15), y1 = py(0.2), x2 = px(0.15), y2 = py(0.55) },
+            { x1 = px(0.15), y1 = py(0.55), x2 = px(0.4), y2 = py(0.55) },
+            { x1 = px(0.3), y1 = py(0.2), x2 = px(0.3), y2 = py(0.4) },
+            { x1 = px(0.45), y1 = py(0.35), x2 = px(0.45), y2 = py(0.8) },
+            { x1 = px(0.6), y1 = py(0.2), x2 = px(0.6), y2 = py(0.55) },
+            { x1 = px(0.6), y1 = py(0.55), x2 = px(0.85), y2 = py(0.55) },
+            { x1 = px(0.75), y1 = py(0.7), x2 = px(0.75), y2 = py(0.95) },
         }, {
-            { x = 1, y = 5, dir = "left", dest = "courtyard", dx = nil, dy = 5 },
-            { x = nil, y = 5, dir = "right", dest = "maze2", dx = 2, dy = 5 },
+            { x = 1, y = py(0.35), dir = "left", dest = "courtyard", dx = nil, dy = py(0.35) },
+            { x = nil, y = py(0.35), dir = "right", dest = "maze2", dx = 2, dy = py(0.35) },
         }),
 
         maze2 = makeRoom("Deep Maze", colors.gray, {
-            { x1 = 8, y1 = 2, x2 = 8, y2 = 10 },
-            { x1 = 8, y1 = 10, x2 = 20, y2 = 10 },
-            { x1 = 14, y1 = 4, x2 = 14, y2 = 8 },
-            { x1 = 20, y1 = 3, x2 = 20, y2 = 10 },
-            { x1 = 26, y1 = 5, x2 = 26, y2 = 12 },
+            { x1 = px(0.2), y1 = py(0.15), x2 = px(0.2), y2 = py(0.7) },
+            { x1 = px(0.2), y1 = py(0.7), x2 = px(0.55), y2 = py(0.7) },
+            { x1 = px(0.4), y1 = py(0.25), x2 = px(0.4), y2 = py(0.55) },
+            { x1 = px(0.6), y1 = py(0.2), x2 = px(0.6), y2 = py(0.7) },
+            { x1 = px(0.8), y1 = py(0.35), x2 = px(0.8), y2 = py(0.85) },
         }, {
-            { x = 1, y = 5, dir = "left", dest = "maze1", dx = nil, dy = 5 },
-        }, { { item = "key_black", x = 30, y = 12 } }),
+            { x = 1, y = py(0.35), dir = "left", dest = "maze1", dx = nil, dy = py(0.35) },
+        }, { { item = "key_black", x = px(0.9), y = py(0.85) } }),
 
         mountain = makeRoom("Mountain Pass", colors.brown, {
-            { x1 = 10, y1 = 6, x2 = 18, y2 = 6 },
-            { x1 = 22, y1 = 8, x2 = 30, y2 = 8 },
+            { x1 = px(0.25), y1 = py(0.4), x2 = px(0.5), y2 = py(0.4) },
+            { x1 = px(0.6), y1 = py(0.55), x2 = px(0.9), y2 = py(0.55) },
         }, {
-            { x = 20, y = nil, dir = "down", dest = "courtyard", dx = 20, dy = 2 },
-            { x = 1, y = 5, dir = "left", dest = "dragon_lair", dx = nil, dy = 5 },
+            { x = midX, y = nil, dir = "down", dest = "courtyard", dx = midX, dy = 3 },
+            { x = 1, y = py(0.35), dir = "left", dest = "dragon_lair", dx = nil, dy = py(0.35) },
         }),
 
         dragon_lair = makeRoom("Dragon's Lair", colors.red, {}, {
-            { x = nil, y = 5, dir = "right", dest = "mountain", dx = 2, dy = 5 },
+            { x = nil, y = py(0.35), dir = "right", dest = "mountain", dx = 2, dy = py(0.35) },
         }),
 
         dark_castle = makeRoom("Black Castle", colors.gray, {}, {
-            { x = nil, y = 5, dir = "right", dest = "forest", dx = 2, dy = 5 },
+            { x = nil, y = py(0.35), dir = "right", dest = "forest", dx = 2, dy = py(0.35) },
         }),
     }
 
     chaliceRoom = "dragon_lair"
-    chaliceX = 20
-    chaliceY = 8
+    chaliceX = midX
+    chaliceY = mid
 end
 
 local function initDragons()
     dragons = {
-        { name = "Yorgle", room = "forest", x = 20, y = 8, color = colors.yellow, alive = true, speed = 3, tick = 0 },
-        { name = "Grundle", room = "maze2", x = 15, y = 6, color = colors.green, alive = true, speed = 2, tick = 0 },
-        { name = "Rhindle", room = "dragon_lair", x = 15, y = 5, color = colors.red, alive = true, speed = 1, tick = 0 },
+        { name = "Yorgle", room = "forest", x = px(0.55), y = py(0.55), color = colors.yellow, alive = true, speed = 3, tick = 0 },
+        { name = "Grundle", room = "maze2", x = px(0.45), y = py(0.4), color = colors.green, alive = true, speed = 2, tick = 0 },
+        { name = "Rhindle", room = "dragon_lair", x = px(0.45), y = py(0.35), color = colors.red, alive = true, speed = 1, tick = 0 },
     }
 end
 
@@ -138,8 +144,8 @@ local function initGame()
     initRooms()
     initDragons()
     currentRoom = "castle"
-    playerX = 20
-    playerY = 8
+    playerX = px(0.5)
+    playerY = py(0.5)
     inventory = {}
     gameOverFlag = false
     gameOverTimer = 0
@@ -182,10 +188,10 @@ function game.update(dt, input)
     local room = rooms[currentRoom]
     local nx, ny = playerX, playerY
 
-    if p1.wasPressed("up") then ny = ny - 1 end
-    if p1.wasPressed("down") then ny = ny + 1 end
-    if p1.wasPressed("left") then nx = nx - 1 end
-    if p1.wasPressed("right") then nx = nx + 1 end
+    if p1.isDown("up") then ny = ny - 1 end
+    if p1.isDown("down") then ny = ny + 1 end
+    if p1.isDown("left") then nx = nx - 1 end
+    if p1.isDown("right") then nx = nx + 1 end
 
     if nx >= 1 and nx <= width and ny >= 1 and ny <= height and not isWall(room, nx, ny) then
         playerX = nx
