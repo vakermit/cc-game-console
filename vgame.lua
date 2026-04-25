@@ -39,11 +39,3 @@ term.setBackgroundColor(colors.black)
 term.setTextColor(colors.white)
 term.clear()
 term.setCursorPos(1, 1)
-print("Console shut down.")
-os.sleep(8)
-local monitor = peripheral.find("monitor")
-if monitor then
-    monitor.setBackgroundColor(colors.black)
-    monitor.clear()
-end
-os.shutdown()

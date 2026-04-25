@@ -11,18 +11,31 @@ Games are standalone Lua files that implement a simple interface (init, update, 
 ## Project Structure
 
 ```
-vgame.lua            Main entry point - boots the console
+startup.lua          Auto-start: screensaver -> vgame loop
+vgame.lua            Game console - menu, game selection, game loop
+screensaver.lua      Screensaver engine - discovers and cycles screen modules
+reset.lua            Utility - clears the monitor
 config.lua           Hardware mappings, network channel, system settings
 transmitter.lua      Signal transmitter program (runs on input computers)
-INTERFACE.md         Game developer interface specification
 lib/
   console.lua        Core console: menu, game loop, network/redstone listeners
   input.lua          Input state machine (held/pressed/released per action)
   block_letters.lua  5x5 bitmap font renderer for title screens
+  cards.lua          Card deck/hand management and rendering
+  screen.lua         Shared utilities for screensaver modules
+screens/
+  screen_ball.lua    Bouncing ball with color-changing trail
+  screen_cat.lua     Wandering ASCII cat with blinking eyes
+  screen_fireworks.lua Firework rockets and particle explosions
+  screen_matrix.lua  Cascading green character rain
 games/
-  game_pong.lua      Pong - 2 player paddle game
+  game_blackjack.lua Blackjack - single player card game
+  game_blocks.lua    Falling Blocks - single player puzzle
   game_invaders.lua  Space Invaders - single player shooter
-  game_test_inputs.lua  Input test visualizer (launched via --test flag)
+  game_paku.lua      Paku Paku - single player maze chase
+  game_pong.lua      Pong - 2 player paddle game
+  game_road_racer.lua Road Racer - single player top-down racer
+  game_test_inputs.lua Input test visualizer (launched via --test flag)
 ```
 
 ## Quick Start
@@ -34,13 +47,13 @@ games/
 
 ## Auto-Start
 
-ComputerCraft runs `startup.lua` automatically when a computer boots. Create this file on the gaming computer to launch the console on power-on:
+ComputerCraft runs `startup.lua` automatically when a computer boots. The included `startup.lua` loops between the screensaver and the game console:
 
-```lua
-shell.run("vgame")
-```
+1. Boot → screensaver runs on the monitor
+2. Any input (button press, redstone, network signal) → wakes into the game menu
+3. Selecting "Shutdown" from the menu → returns to the screensaver
 
-For transmitter computers:
+For transmitter computers, create a `startup.lua` with:
 
 ```lua
 shell.run("transmitter")
@@ -50,7 +63,7 @@ With startup files in place, the entire arcade boots itself when the Minecraft c
 
 ## Controls
 
-Menu navigation uses Player 1's up/down/action buttons. During gameplay, hold alt+action (Player 1) for ~1 second to return to the menu. A redstone signal on the "left" side of the gaming computer acts as a reset button; "right" side powers off the computer completely.
+Menu navigation uses Player 1's up/down/action buttons. During gameplay, hold alt+action (Player 1) for ~1 second to return to the menu. A redstone signal on the "left" side of the gaming computer acts as a reset button; "right" side returns to the screensaver.
 
 ## Test Mode
 

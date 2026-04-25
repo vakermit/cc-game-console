@@ -83,7 +83,7 @@ The gaming computer itself uses 2 redstone sides for system control:
 | Side | Function | Behavior |
 |------|----------|----------|
 | **left** | Reset | Interrupts current game, returns to title screen |
-| **right** | Power | Shuts down the computer completely (os.shutdown) |
+| **right** | Power | Exits game console, returns to screensaver |
 
 Both have a 0.3-second debounce to prevent double-triggering.
 

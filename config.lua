@@ -69,4 +69,13 @@ config.actions = {
     back_ticks  = 20,
 }
 
+config.screensaver = {
+    screenDir = "screens",
+    screenPrefix = "screen_",
+    tickRate = 0.15,
+    baseTime = 300,
+    deltaTime = 180,
+    minTime = 60,
+}
+
 return config
