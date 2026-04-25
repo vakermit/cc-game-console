@@ -403,6 +403,380 @@ addEvent({
     end,
 })
 
+addEvent({
+    text = function() return "The jeep's engine sputters and dies. Smoke pours from under the hood." end,
+    choices = { "Attempt repair", "Scavenge nearby", "Wait and try again" },
+    resolve = function(choice)
+        if choice == 1 then
+            if hasSkill("repair") then
+                fuel = fuel - 1
+                return "Nedry Jr. patches the fuel line. Good as new-ish. (-1 fuel)"
+            else
+                fuel = fuel - 3
+                return "Trial and error. Mostly error. (-3 fuel)"
+            end
+        elseif choice == 2 then
+            if math.random() > 0.4 then
+                fuel = fuel + 2
+                return "Found a toolbox and spare hose. (+2 fuel saved)"
+            else
+                return hurtRandom(15, "cut themselves on rusted metal.") .. " Nothing useful."
+            end
+        else
+            if math.random() > 0.3 then
+                return "It starts on the third try. You exhale."
+            else
+                fuel = fuel - 2
+                return "Flooded the engine trying. (-2 fuel)"
+            end
+        end
+    end,
+})
+
+addEvent({
+    text = function() return "You hear a low rumble. The ground shakes. Volcanic activity?" end,
+    choices = { "Detour left", "Detour right", "Gun it straight" },
+    resolve = function(choice)
+        if choice == 1 then
+            distance = distance + 3
+            return "Longer route but safe. (+3 miles added)"
+        elseif choice == 2 then
+            if math.random() > 0.5 then
+                return "Clear path. Good call."
+            else
+                return "Landslide! " .. hurtRandom(20, "was hit by debris.") .. " Rough detour."
+            end
+        else
+            fuel = fuel - 2
+            if math.random() > 0.4 then
+                return "You outrun the tremor. Barely. (-2 fuel)"
+            else
+                return hurtRandom(30, "was thrown from the jeep.") .. " (-2 fuel)"
+            end
+        end
+    end,
+})
+
+addEvent({
+    text = function() return "An electric fence still hums ahead. The gate is locked." end,
+    choices = { "Cut the fence", "Find another way", "Ram through" },
+    resolve = function(choice)
+        if choice == 1 then
+            if hasSkill("repair") then
+                return "Nedry Jr. kills the power first. Clean cut."
+            else
+                return hurtRandom(20, "got shocked.") .. " But the fence is open now."
+            end
+        elseif choice == 2 then
+            distance = distance + 4
+            return "Long way around. (+4 miles added)"
+        else
+            fuel = fuel - 2
+            if math.random() > 0.5 then
+                return "The gate buckles. Freedom! (-2 fuel)"
+            else
+                return "Airbags deploy. " .. hurtRandom(15, "hit the steering wheel.") .. " (-2 fuel)"
+            end
+        end
+    end,
+})
+
+addEvent({
+    text = function() return "Ellie spots edible plants by the roadside. The area seems quiet." end,
+    choices = { "Stop and forage", "Keep driving" },
+    resolve = function(choice)
+        if choice == 1 then
+            if hasSkill("forage") then
+                food = food + 6
+                return "Ellie knows her stuff. Berries, tubers, wild greens. (+6 food)"
+            else
+                food = food + 2
+                if math.random() > 0.7 then
+                    return "Found some edible plants. (+2 food)"
+                else
+                    return hurtRandom(10, "ate something questionable.") .. " (+2 food)"
+                end
+            end
+        else
+            return "You press on. Probably the smart move."
+        end
+    end,
+})
+
+addEvent({
+    text = function() return "A nest of eggs sits beside the road. They're warm. Something big laid these." end,
+    choices = { "Take the eggs", "Leave them", "Study them" },
+    resolve = function(choice)
+        if choice == 1 then
+            food = food + 4
+            if math.random() > 0.4 then
+                return "Protein is protein. (+4 food)"
+            else
+                return "The mother returns. " .. hurtRandom(35, "met an angry parent.") .. " (+4 food)"
+            end
+        elseif choice == 2 then
+            return "You back away slowly. Wise."
+        else
+            healParty(3)
+            if hasSkill("dino") then
+                return "Dr. Sattler identifies them as Maiasaura. Gentle giants. Morale boost."
+            else
+                return "They're big eggs. That's all you've learned."
+            end
+        end
+    end,
+})
+
+addEvent({
+    text = function() return "You find a working radio in an old bunker. Static, then a voice." end,
+    choices = { "Respond", "Listen only", "Take the radio" },
+    resolve = function(choice)
+        if choice == 1 then
+            if math.random() > 0.5 then
+                distance = distance - 5
+                return "Rescue team gives coordinates for a shortcut! (-5 miles)"
+            else
+                return "The signal dies. At least someone knows you're here."
+            end
+        elseif choice == 2 then
+            return "You learn the coast is clear. That's something."
+        else
+            if math.random() > 0.6 then
+                return "Extra radio might come in handy later."
+            else
+                return "It sparks and dies when you unplug it. Worth nothing now."
+            end
+        end
+    end,
+})
+
+addEvent({
+    text = function() return "A Dilophosaurus rises from the bushes, frill expanding. It hisses." end,
+    choices = { "Back away slowly", "Shoot it", "Throw food" },
+    resolve = function(choice)
+        if choice == 1 then
+            if math.random() > 0.4 then
+                return "It loses interest. Your pants may never recover."
+            else
+                return hurtRandom(25, "was sprayed with venom.") .. " Can't see!"
+            end
+        elseif choice == 2 then
+            if ammo >= 2 then
+                ammo = ammo - 2
+                return "Two shots. It's down. (-2 ammo)"
+            else
+                return "No ammo! " .. hurtRandom(30, "was sprayed with blinding venom.")
+            end
+        else
+            food = food - 2
+            return "It takes the food and waddles off. (-2 food)"
+        end
+    end,
+})
+
+addEvent({
+    text = function() return "Night falls fast. You need to decide about camp." end,
+    choices = { "Camp with fire", "Sleep in jeep", "Drive through night" },
+    resolve = function(choice)
+        if choice == 1 then
+            food = food - 1
+            healParty(15)
+            return "Warm and rested. The fire keeps most things away. (-1 food)"
+        elseif choice == 2 then
+            healParty(5)
+            return "Cramped but safe. Something sniffs around at 3am."
+        else
+            fuel = fuel - 3
+            if math.random() > 0.4 then
+                distance = distance - 8
+                return "Extra miles in the dark! (-3 fuel, -8 miles)"
+            else
+                return hurtRandom(15, "crashed into a fallen tree.") .. " (-3 fuel)"
+            end
+        end
+    end,
+})
+
+addEvent({
+    text = function() return "Two Triceratops are fighting over territory. They're blocking the road." end,
+    choices = { "Wait them out", "Honk the horn", "Off-road around" },
+    resolve = function(choice)
+        if choice == 1 then
+            return "30 minutes later they move on. Time lost, dignity intact."
+        elseif choice == 2 then
+            if math.random() > 0.5 then
+                return "They startle and scatter. Easy."
+            else
+                return "They charge the jeep! " .. hurtRandom(25, "was gored through the door.")
+            end
+        else
+            fuel = fuel - 2
+            if math.random() > 0.3 then
+                return "Bumpy but you make it around. (-2 fuel)"
+            else
+                return "Stuck in mud. Lost time digging out. (-2 fuel)"
+            end
+        end
+    end,
+})
+
+addEvent({
+    text = function() return "You spot a Spinosaurus fishing in the shallows. It hasn't seen you yet." end,
+    choices = { "Creep past", "Wait it out", "Reverse" },
+    resolve = function(choice)
+        if choice == 1 then
+            if hasSkill("dino") then
+                return "Dr. Sattler times it between catches. Flawless."
+            elseif math.random() > 0.4 then
+                return "You crawl past at 2mph. Longest minute of your life."
+            else
+                return "It heard you. " .. hurtRandom(40, "learned why Spinosaurus is apex.")
+            end
+        elseif choice == 2 then
+            food = food - 1
+            return "An hour passes. It finally leaves. (-1 food)"
+        else
+            fuel = fuel - 2
+            distance = distance + 5
+            return "Long backtrack to find another route. (-2 fuel, +5 miles)"
+        end
+    end,
+})
+
+addEvent({
+    text = function() return "An InGen supply drop pod, still sealed, sits in a clearing." end,
+    choices = { "Open it" },
+    resolve = function(choice)
+        local r = math.random(5)
+        if r == 1 then
+            ammo = ammo + 6
+            return "Military grade. Jackpot. (+6 ammo)"
+        elseif r == 2 then
+            food = food + 4
+            medkits = medkits + 2
+            return "Rations and medical supplies. (+4 food, +2 medkits)"
+        elseif r == 3 then
+            fuel = fuel + 5
+            return "Emergency fuel reserve. (+5 fuel)"
+        elseif r == 4 then
+            ammo = ammo + 2
+            food = food + 2
+            fuel = fuel + 2
+            medkits = medkits + 1
+            return "A little of everything. (+2 ammo, +2 food, +2 fuel, +1 medkit)"
+        else
+            return "Empty. Someone got here first. The lock was clawed open."
+        end
+    end,
+})
+
+addEvent({
+    text = function() return "The road ahead is covered in thick webbing. Something large spun this." end,
+    choices = { "Burn through it", "Cut through", "Find another way" },
+    resolve = function(choice)
+        if choice == 1 then
+            if ammo >= 1 then
+                ammo = ammo - 1
+                return "A flare does the trick. The web burns fast. (-1 ammo)"
+            else
+                return "Nothing to light it with. You hack through instead. " .. hurtRandom(10, "got tangled.")
+            end
+        elseif choice == 2 then
+            if math.random() > 0.5 then
+                return "Slow going but you clear a path."
+            else
+                return hurtRandom(20, "disturbed the web's owner.")
+            end
+        else
+            distance = distance + 3
+            return "Smart. Whatever made that, you don't want to meet. (+3 miles)"
+        end
+    end,
+})
+
+addEvent({
+    text = function() return "You pass a crashed tour vehicle. A camera is still recording." end,
+    choices = { "Check for survivors", "Search for supplies", "Move on" },
+    resolve = function(choice)
+        if choice == 1 then
+            if math.random() > 0.6 then
+                healParty(5)
+                return "No survivors but you find a journal. A reminder to keep going."
+            else
+                return "Something is using this as a nest. " .. hurtRandom(20, "was ambushed.")
+            end
+        elseif choice == 2 then
+            local r = math.random(3)
+            if r == 1 then
+                food = food + 3
+                return "Tourist snacks in the glovebox. (+3 food)"
+            elseif r == 2 then
+                medkits = medkits + 1
+                return "First aid kit under the seat. (+1 medkit)"
+            else
+                fuel = fuel + 2
+                return "Siphoned a bit of fuel. (+2 fuel)"
+            end
+        else
+            return "Some things are best left alone."
+        end
+    end,
+})
+
+addEvent({
+    text = function() return "Muldoon spots tracks. Big ones. Very fresh. They lead toward your route." end,
+    choices = { "Set an ambush", "Change course", "Move fast and quiet" },
+    resolve = function(choice)
+        if choice == 1 then
+            if hasSkill("combat") and ammo >= 4 then
+                ammo = ammo - 4
+                return "Muldoon sets a trap. It works. You won't be followed. (-4 ammo)"
+            elseif ammo >= 4 then
+                ammo = ammo - 4
+                return hurtRandom(20, "misjudged the ambush timing.") .. " (-4 ammo)"
+            else
+                return "Not enough ammo for an ambush. " .. hurtRandom(25, "was caught off guard.")
+            end
+        elseif choice == 2 then
+            distance = distance + 6
+            fuel = fuel - 1
+            return "Major detour but you avoid whatever made those. (+6 miles, -1 fuel)"
+        else
+            if math.random() > 0.5 then
+                return "You slip through undetected. Heart rate: concerning."
+            else
+                return "It finds you. " .. hurtRandom(35, "met the thing that made the tracks.")
+            end
+        end
+    end,
+})
+
+addEvent({
+    text = function() return "A clearing full of sleeping herbivores. It's almost peaceful." end,
+    choices = { "Rest here", "Forage the area", "Sneak through" },
+    resolve = function(choice)
+        if choice == 1 then
+            food = food - 2
+            healParty(20)
+            return "Best rest in days. The dinos don't mind. (-2 food, party heals)"
+        elseif choice == 2 then
+            if hasSkill("forage") then
+                food = food + 5
+                return "Ellie finds edible ferns and fruit trees. (+5 food)"
+            else
+                food = food + 2
+                return "Slim pickings but something. (+2 food)"
+            end
+        else
+            if math.random() > 0.2 then
+                return "You tiptoe through. One opens an eye and goes back to sleep."
+            else
+                return "You step on a tail! Stampede! " .. hurtRandom(20, "was trampled in the chaos.")
+            end
+        end
+    end,
+})
+
 local function initParty()
     party = {}
     for i, r in ipairs(roles) do
