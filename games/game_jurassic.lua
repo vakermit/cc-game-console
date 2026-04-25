@@ -777,6 +777,14 @@ addEvent({
     end,
 })
 
+local difficulties = {
+    { name = "Easy",       fuel = 60, food = 40, ammo = 20, medkits = 5, desc = "Generous supplies" },
+    { name = "Medium",     fuel = 40, food = 25, ammo = 12, medkits = 3, desc = "Standard issue" },
+    { name = "Hard",       fuel = 28, food = 18, ammo = 8,  medkits = 2, desc = "Bare minimum" },
+    { name = "Impossible", fuel = 18, food = 12, ammo = 4,  medkits = 1, desc = "Good luck" },
+}
+local difficulty
+
 local function initParty()
     party = {}
     for i, r in ipairs(roles) do
@@ -794,10 +802,7 @@ local function initGame()
     day = 1
     totalDistance = 120
     distance = totalDistance
-    fuel = 30
-    food = 25
-    ammo = 10
-    medkits = 3
+    difficulty = nil
     pace = 2
     rations = 1
     selected = 1
@@ -809,6 +814,15 @@ local function initGame()
     resultWait = 0
     setMessage("")
     initParty()
+end
+
+local function applyDifficulty(diff)
+    difficulty = diff
+    local d = difficulties[diff]
+    fuel = d.fuel
+    food = d.food
+    ammo = d.ammo
+    medkits = d.medkits
 end
 
 local function advanceDay()
@@ -904,6 +918,19 @@ function game.update(dt, input)
             totalDistance .. " miles of jungle to reach the coast. " ..
             "You have a jeep, limited supplies, and very large problems.")
         if p1.wasPressed("action") then
+            state = "difficulty"
+            selected = 2
+        end
+
+    elseif state == "difficulty" then
+        if p1.wasPressed("up") then
+            selected = selected - 1
+            if selected < 1 then selected = #difficulties end
+        elseif p1.wasPressed("down") then
+            selected = selected + 1
+            if selected > #difficulties then selected = 1 end
+        elseif p1.wasPressed("action") then
+            applyDifficulty(selected)
             state = "pace"
             selected = pace
         end
@@ -995,21 +1022,23 @@ function game.draw()
     local header = "Day " .. day .. "  |  " .. distance .. " mi left"
     term.write(header)
 
-    local resY = 2
-    term.setBackgroundColor(colors.black)
-    drawBar(2, resY, "Fuel", fuel, 30, fuel > 8 and colors.lime or fuel > 3 and colors.yellow or colors.red)
-    drawBar(14, resY, "Food", food, 25, food > 8 and colors.lime or food > 3 and colors.yellow or colors.red)
-    drawBar(26, resY, "Ammo", ammo, 10, colors.cyan)
+    if difficulty then
+        local resY = 2
+        term.setBackgroundColor(colors.black)
+        drawBar(2, resY, "Fuel", fuel, 30, fuel > 8 and colors.lime or fuel > 3 and colors.yellow or colors.red)
+        drawBar(14, resY, "Food", food, 25, food > 8 and colors.lime or food > 3 and colors.yellow or colors.red)
+        drawBar(26, resY, "Ammo", ammo, 10, colors.cyan)
 
-    local partyY = 3
-    term.setCursorPos(2, partyY)
-    for i, p in ipairs(party) do
-        local nameW = math.floor((width - 2) / 4)
-        local x = 2 + (i - 1) * nameW
-        term.setCursorPos(x, partyY)
-        term.setTextColor(statusColors[p.status])
-        local display = p.name:sub(1, nameW - 1)
-        term.write(display)
+        local partyY = 3
+        term.setCursorPos(2, partyY)
+        for i, p in ipairs(party) do
+            local nameW = math.floor((width - 2) / 4)
+            local x = 2 + (i - 1) * nameW
+            term.setCursorPos(x, partyY)
+            term.setTextColor(statusColors[p.status])
+            local display = p.name:sub(1, nameW - 1)
+            term.write(display)
+        end
     end
 
     local textY = 5
@@ -1027,6 +1056,29 @@ function game.draw()
         term.setTextColor(colors.lightGray)
         term.setCursorPos(2, height - 1)
         term.write("[action] Begin expedition")
+
+    elseif state == "difficulty" then
+        term.setTextColor(colors.yellow)
+        term.setCursorPos(2, textY)
+        term.write("Choose difficulty:")
+        for i, d in ipairs(difficulties) do
+            term.setCursorPos(4, textY + 1 + i)
+            if i == selected then
+                term.setTextColor(colors.white)
+                term.setBackgroundColor(colors.gray)
+                term.write(" " .. d.name .. " ")
+                term.setBackgroundColor(colors.black)
+            else
+                term.setTextColor(colors.lightGray)
+                term.write(d.name)
+            end
+            term.setTextColor(colors.gray)
+            term.write("  " .. d.desc)
+        end
+        local d = difficulties[selected]
+        term.setCursorPos(4, textY + #difficulties + 3)
+        term.setTextColor(colors.lightGray)
+        term.write("Fuel:" .. d.fuel .. "  Food:" .. d.food .. "  Ammo:" .. d.ammo .. "  Med:" .. d.medkits)
 
     elseif state == "pace" then
         term.setTextColor(colors.yellow)
