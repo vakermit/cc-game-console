@@ -627,12 +627,17 @@ function game.draw()
         term.write("[v^] +/-100  [<>] +/-25  [action] Set")
     end
 
+    local mapX = infoX + 10
+
     if mode == "scan" then
+        term.setCursorPos(mapX, sectorOY)
+        term.setTextColor(colors.yellow)
+        term.write("Long Range Scan")
         for dy = -1, 1 do
             for dx = -1, 1 do
                 local qx = playerQX + dx
                 local qy = playerQY + dy
-                term.setCursorPos(2 + (dx + 1) * 5, panelY + dy + 1)
+                term.setCursorPos(mapX + (dx + 1) * 5, sectorOY + 1 + dy + 1)
                 if qx >= 1 and qx <= SZ and qy >= 1 and qy <= SZ then
                     local gq = galaxy[qy][qx]
                     gq.scanned = true
@@ -651,15 +656,18 @@ function game.draw()
                 end
             end
         end
-        term.setCursorPos(18, panelY + 1)
+        term.setCursorPos(mapX, sectorOY + 5)
         term.setTextColor(colors.gray)
         term.write("KBS = Klingons/Bases/Stars")
     end
 
     if mode == "warp" then
+        term.setCursorPos(mapX, sectorOY)
+        term.setTextColor(colors.yellow)
+        term.write("Galaxy Map")
         for qy = 1, SZ do
             for qx = 1, SZ do
-                term.setCursorPos(infoX + (qx - 1) * 2, sectorOY + qy - 1)
+                term.setCursorPos(mapX + (qx - 1) * 2, sectorOY + qy)
                 local gq = galaxy[qy][qx]
                 if qx == playerQX and qy == playerQY then
                     term.setTextColor(colors.lime)
@@ -679,8 +687,8 @@ function game.draw()
                 end
             end
         end
-        local cx = infoX + (cursorX - 1) * 2
-        local cy = sectorOY + cursorY - 1
+        local cx = mapX + (cursorX - 1) * 2
+        local cy = sectorOY + cursorY
         term.setCursorPos(cx - 1, cy)
         term.setTextColor(colors.yellow)
         term.write("[")

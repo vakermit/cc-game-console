@@ -17,7 +17,8 @@ local function status(msg)
     term.redirect(old)
 end
 
-sleep(30)
+status("Waiting for startup...")
+sleep(15)
 while true do
     status("Starting screensaver...")
     shell.run("screensaver")
