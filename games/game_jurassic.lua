@@ -5,7 +5,7 @@ local game = {}
 local width, height
 local state
 local day, distance, totalDistance
-local fuel, food, ammo, medkits
+local fuel, food, ammo, medkits, karma
 local pace, rations
 local party
 local eventQueue, currentEvent
@@ -111,6 +111,7 @@ local function addEvent(e)
 end
 
 addEvent({
+    karma_rating = -5,
     text = function()
         return "A " .. dinoNames[math.random(#dinoNames)] ..
             " blocks the road ahead. Its head swivels toward the jeep."
@@ -144,6 +145,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = -7,
     text = function() return "Pack of Velociraptors spotted flanking the jeep. They're organized." end,
     choices = { "Defend", "Speed up", "Use flare" },
     resolve = function(choice)
@@ -178,6 +180,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = 3,
     text = function() return "You find an abandoned InGen lab. The power flickers on and off." end,
     choices = { "Search it", "Keep driving", "Siphon fuel" },
     resolve = function(choice)
@@ -207,6 +210,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = -3,
     text = function() return "A river blocks the path. The water is murky and something large moved under the surface." end,
     choices = { "Ford it", "Find a bridge", "Build a raft" },
     resolve = function(choice)
@@ -234,6 +238,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = -2,
     text = function() return "A herd of Gallimimus stampedes across the road!" end,
     choices = { "Wait it out", "Drive through" },
     resolve = function(choice)
@@ -251,6 +256,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = -3,
     text = function() return "Tropical storm rolls in. Visibility drops to zero." end,
     choices = { "Camp here", "Push through" },
     resolve = function(choice)
@@ -270,6 +276,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = 4,
     text = function() return "A Brachiosaurus lumbers across the clearing. It seems docile." end,
     choices = { "Observe quietly", "Try to pass under" },
     resolve = function(choice)
@@ -291,6 +298,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = 7,
     text = function() return "You spot supply crates from a crashed helicopter." end,
     choices = { "Investigate" },
     resolve = function(choice)
@@ -314,6 +322,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = -5,
     text = function()
         local living = {}
         for _, p in ipairs(party) do
@@ -348,6 +357,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = -2,
     text = function() return "Compys surround the campsite. Tiny but bold. One is chewing your boot." end,
     choices = { "Shoo them", "Ignore them" },
     resolve = function(choice)
@@ -366,6 +376,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = 6,
     text = function() return "You find an abandoned jeep on the roadside. Keys still in it." end,
     choices = { "Strip it for parts", "Swap vehicles" },
     resolve = function(choice)
@@ -385,6 +396,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = -4,
     text = function() return "A Pteranodon swoops low, snatching at anything shiny." end,
     choices = { "Duck and cover", "Shoot it down" },
     resolve = function(choice)
@@ -406,6 +418,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = -5,
     text = function() return "The jeep's engine sputters and dies. Smoke pours from under the hood." end,
     choices = { "Attempt repair", "Scavenge nearby", "Wait and try again" },
     resolve = function(choice)
@@ -436,6 +449,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = -4,
     text = function() return "You hear a low rumble. The ground shakes. Volcanic activity?" end,
     choices = { "Detour left", "Detour right", "Gun it straight" },
     resolve = function(choice)
@@ -460,6 +474,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = -3,
     text = function() return "An electric fence still hums ahead. The gate is locked." end,
     choices = { "Cut the fence", "Find another way", "Ram through" },
     resolve = function(choice)
@@ -484,6 +499,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = 5,
     text = function() return "Ellie spots edible plants by the roadside. The area seems quiet." end,
     choices = { "Stop and forage", "Keep driving" },
     resolve = function(choice)
@@ -506,6 +522,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = 1,
     text = function() return "A nest of eggs sits beside the road. They're warm. Something big laid these." end,
     choices = { "Take the eggs", "Leave them", "Study them" },
     resolve = function(choice)
@@ -530,6 +547,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = 5,
     text = function() return "You find a working radio in an old bunker. Static, then a voice." end,
     choices = { "Respond", "Listen only", "Take the radio" },
     resolve = function(choice)
@@ -553,6 +571,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = -6,
     text = function() return "A Dilophosaurus rises from the bushes, frill expanding. It hisses." end,
     choices = { "Back away slowly", "Shoot it", "Throw food" },
     resolve = function(choice)
@@ -577,6 +596,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = 0,
     text = function() return "Night falls fast. You need to decide about camp." end,
     choices = { "Camp with fire", "Sleep in jeep", "Drive through night" },
     resolve = function(choice)
@@ -600,6 +620,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = -3,
     text = function() return "Two Triceratops are fighting over territory. They're blocking the road." end,
     choices = { "Wait them out", "Honk the horn", "Off-road around" },
     resolve = function(choice)
@@ -623,6 +644,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = -7,
     text = function() return "You spot a Spinosaurus fishing in the shallows. It hasn't seen you yet." end,
     choices = { "Creep past", "Wait it out", "Reverse" },
     resolve = function(choice)
@@ -646,6 +668,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = 8,
     text = function() return "An InGen supply drop pod, still sealed, sits in a clearing." end,
     choices = { "Open it" },
     resolve = function(choice)
@@ -673,6 +696,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = -4,
     text = function() return "The road ahead is covered in thick webbing. Something large spun this." end,
     choices = { "Burn through it", "Cut through", "Find another way" },
     resolve = function(choice)
@@ -697,6 +721,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = 2,
     text = function() return "You pass a crashed tour vehicle. A camera is still recording." end,
     choices = { "Check for survivors", "Search for supplies", "Move on" },
     resolve = function(choice)
@@ -726,6 +751,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = -6,
     text = function() return "Muldoon spots tracks. Big ones. Very fresh. They lead toward your route." end,
     choices = { "Set an ambush", "Change course", "Move fast and quiet" },
     resolve = function(choice)
@@ -754,6 +780,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = 5,
     text = function() return "A clearing full of sleeping herbivores. It's almost peaceful." end,
     choices = { "Rest here", "Forage the area", "Sneak through" },
     resolve = function(choice)
@@ -780,6 +807,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = 4,
     text = function() return "The jeep's GPS flickers to life for a moment. You catch a glimpse of the map." end,
     choices = { "Follow the shortcut", "Stick to main road" },
     resolve = function(choice)
@@ -798,6 +826,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = 6,
     text = function() return "You find a freshwater stream. The water looks clean." end,
     choices = { "Refill canteens", "Fish for food", "Keep moving" },
     resolve = function(choice)
@@ -819,6 +848,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = -4,
     text = function() return "An Ankylosaurus swings its tail club at the jeep, thinking you're a threat." end,
     choices = { "Reverse!", "Wait for it to calm", "Drive around it" },
     resolve = function(choice)
@@ -844,6 +874,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = 4,
     text = function() return "Nedry Jr. spots a cell tower. It's damaged but the wiring is intact." end,
     choices = { "Repair it", "Salvage parts", "Ignore it" },
     resolve = function(choice)
@@ -864,6 +895,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = -5,
     text = function() return "You hear screaming from a wrecked tour bus ahead." end,
     choices = { "Investigate", "Drive past" },
     resolve = function(choice)
@@ -882,6 +914,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = -4,
     text = function() return "A juvenile T-Rex stumbles onto the road. It looks confused, not aggressive." end,
     choices = { "Shoo it away", "Wait quietly", "Flee immediately" },
     resolve = function(choice)
@@ -909,6 +942,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = 3,
     text = function() return "Muldoon finds tire tracks. Another vehicle came through here recently." end,
     choices = { "Follow the tracks", "Go the other way" },
     resolve = function(choice)
@@ -930,6 +964,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = -2,
     text = function() return "A massive tree has fallen across the road." end,
     choices = { "Clear it", "Go around", "Drive over it" },
     resolve = function(choice)
@@ -956,6 +991,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = 6,
     text = function() return "You discover an intact vending machine in an old visitor center." end,
     choices = { "Break it open" },
     resolve = function(choice)
@@ -966,6 +1002,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = -3,
     text = function() return "Fog rolls in thick. You can barely see 10 feet ahead." end,
     choices = { "Creep forward", "Stop and wait", "Use headlights and drive" },
     resolve = function(choice)
@@ -990,6 +1027,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = 3,
     text = function() return "You pass through an old genetics lab. Embryo storage tanks line the walls." end,
     choices = { "Search for supplies", "Check the cold storage", "Leave quickly" },
     resolve = function(choice)
@@ -1014,6 +1052,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = -2,
     text = function() return "A pack of small dinosaurs is following the jeep at a distance." end,
     choices = { "Speed up", "Throw food to distract", "Ignore them" },
     resolve = function(choice)
@@ -1035,6 +1074,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = -5,
     text = function() return "Lightning strikes a tree nearby! A fire starts spreading." end,
     choices = { "Drive through the fire", "Detour around", "Start a firebreak" },
     resolve = function(choice)
@@ -1061,6 +1101,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = 7,
     text = function() return "You find a bunker with a generator. The lights still work." end,
     choices = { "Sleep here tonight", "Siphon the generator", "Search and move on" },
     resolve = function(choice)
@@ -1085,6 +1126,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = 0,
     text = function() return "The road crosses a dried riverbed. Bones litter the sand." end,
     choices = { "Cross quickly", "Study the bones" },
     resolve = function(choice)
@@ -1106,6 +1148,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = 5,
     text = function() return "You hear a helicopter in the distance! It's heading the wrong way." end,
     choices = { "Signal with fire", "Signal with horn", "Don't draw attention" },
     resolve = function(choice)
@@ -1131,6 +1174,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = 8,
     text = function() return "Muldoon finds a weapons cache hidden in a hollow tree." end,
     choices = { "Take everything" },
     resolve = function(choice)
@@ -1140,6 +1184,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = -1,
     text = function() return "A Parasaurolophus honks loudly from a ridge. Others answer from every direction." end,
     choices = { "Drive through the herd", "Wait for them to pass" },
     resolve = function(choice)
@@ -1159,6 +1204,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = -4,
     text = function() return "The jeep's brakes are making a terrible noise." end,
     choices = { "Fix them now", "Nurse them along" },
     resolve = function(choice)
@@ -1180,6 +1226,7 @@ addEvent({
 })
 
 addEvent({
+    karma_rating = 2,
     text = function() return "You spot a dock on the coast — but it's still miles away and the road is washed out." end,
     choices = { "Go for it on foot", "Find another route" },
     resolve = function(choice)
@@ -1223,6 +1270,7 @@ local function initGame()
     day = 1
     totalDistance = 120
     distance = totalDistance
+    karma = 0
     difficulty = nil
     pace = 2
     rations = 1
@@ -1263,10 +1311,18 @@ local function advanceDay()
 
     if math.random() < paceRisk[pace] then
         local e = events[math.random(#events)]
+        local kr = e.karma_rating or 0
+        if kr ~= 0 and ((karma > 0 and kr > 0) or (karma < 0 and kr < 0)) then
+            local rerollChance = math.abs(karma) / 100
+            if math.random() < rerollChance then
+                e = events[math.random(#events)]
+            end
+        end
         currentEvent = {
             text = e.text(),
             choices = e.choices,
             resolve = e.resolve,
+            karma_rating = e.karma_rating or 0,
         }
         state = "event"
         setMessage(currentEvent.text)
@@ -1423,6 +1479,7 @@ function game.update(dt, input)
             if selected > numChoices then selected = 1 end
         elseif p1.wasPressed("action") then
             local result = currentEvent.resolve(selected)
+            karma = math.max(-100, math.min(100, karma + (currentEvent.karma_rating or 0)))
             setMessage(result)
             state = "result"
             resultWait = 0
@@ -1473,6 +1530,7 @@ function game.draw()
         drawBar(2, resY, "Fuel", fuel, 30, fuel > 8 and colors.lime or fuel > 3 and colors.yellow or colors.red)
         drawBar(14, resY, "Food", food, 25, food > 8 and colors.lime or food > 3 and colors.yellow or colors.red)
         drawBar(26, resY, "Ammo", ammo, 10, colors.cyan)
+        drawBar(38, resY, "Karma", karma, 100, karma > 10 and colors.lime or karma < -10 and colors.red or colors.lightGray)
 
         local partyY = 3
         term.setCursorPos(2, partyY)
