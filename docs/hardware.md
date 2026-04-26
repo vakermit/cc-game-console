@@ -34,6 +34,10 @@ Computer 17 is shared between both players for their action and alt buttons.
 
 ### Wiring
 
+<p align="center">
+  <img src="docs/images/cc-game-console-setup.png" width="600"/>
+</p>
+
 Connect a redstone signal source to the appropriate side of each transmitter. The transmitter detects analog signal strength (0-15), where 0 = released and any positive value = pressed.
 
 Any redstone-producing block works (button, lever, pressure plate), but the recommended approach uses **Create mod Redstone Links** for wireless input. A Redstone Link acts as a wireless redstone transmitter/receiver pair — place one in transmit mode at the input location and one in receive mode adjacent to the transmitter computer.
