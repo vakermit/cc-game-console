@@ -101,8 +101,10 @@ Upload the following to the gaming computer, preserving directory structure:
 /lib/console.lua
 /lib/input.lua
 /lib/block_letters.lua
+/lib/*.lua
 /games/game_pong.lua
 /games/game_invaders.lua
+/games/game_*.lua
 /games/game_test_inputs.lua
 ```
 
