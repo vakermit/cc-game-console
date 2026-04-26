@@ -1,5 +1,6 @@
 
 old/
+sync.sh
 
 # Compiled Lua sources
 luac.out
