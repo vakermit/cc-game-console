@@ -1,6 +1,8 @@
 # cc-game-console
 
-A game console platform for [ComputerCraft: Tweaked](https://tweaked.cc/) (Minecraft). Uses redstone signals over a wired modem network to provide physical arcade-style controls for 2-player games rendered on an in-game computer terminal.
+A game console platform for [ComputerCraft: Tweaked](https://tweaked.cc/) (Minecraft). 
+
+Uses redstone signals over a wired modem network to provide physical arcade-style controls for 2-player games rendered on an in-game computer terminal.
 
 
 <p align="center">
