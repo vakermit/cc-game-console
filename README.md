@@ -2,6 +2,12 @@
 
 A game console platform for [ComputerCraft: Tweaked](https://tweaked.cc/) (Minecraft). Uses redstone signals over a wired modem network to provide physical arcade-style controls for 2-player games rendered on an in-game computer terminal.
 
+<p align="center">
+
+  <img src="docs/images/cc-game-console-block-breaker.png" width="400"/>
+
+</p>
+
 ## How It Works
 
 The system consists of transmitter computers wired to physical redstone inputs (buttons, levers, pressure plates) and a central gaming computer that runs the console. Transmitters detect redstone changes on 4 sides and broadcast them over the modem network. The gaming computer maps these signals to logical player actions (up, down, left, right, action, alt) and feeds them to whichever game is running.
