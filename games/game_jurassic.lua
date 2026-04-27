@@ -74,6 +74,17 @@ local function hasSkill(skill)
     return false
 end
 
+local raptorDeathMessages = {
+    "Your fragrant corpse has attracted predators. Velociraptors finish the job.",
+    "The velociraptors arrived before the body was cold.",
+    "A pack of velociraptors descended on the remains. Nature wastes nothing.",
+    "Drawn by the scent, velociraptors claimed what was left.",
+    "The raptors found the body within minutes. They always do.",
+    "Velociraptors circled the corpse like vultures. Isla Nubla's cleanup crew.",
+    "Death by misadventure. Burial by velociraptor.",
+    "The jungle giveth, and the velociraptors taketh away.",
+}
+
 local function hurtRandom(amount, cause)
     local targets = {}
     for i, p in ipairs(party) do
@@ -85,7 +96,11 @@ local function hurtRandom(amount, cause)
     p.health = math.max(0, p.health - amount)
     if p.health <= 0 then
         p.status = 5
-        return p.name .. " " .. cause
+        local msg = p.name .. " " .. cause
+        if math.random(5) == 1 then
+            msg = msg .. " " .. raptorDeathMessages[math.random(#raptorDeathMessages)]
+        end
+        return msg
     else
         p.status = math.max(p.status, amount > 30 and 3 or 2)
         return p.name .. " was hurt."
