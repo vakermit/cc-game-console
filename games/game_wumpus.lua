@@ -574,11 +574,6 @@ function game.draw()
         term.setCursorPos(2, textY + #messageLines + 2)
         term.write("Arrows remaining: " .. arrows)
 
-        local countdown = math.max(0, 15 - math.floor(gameOverTimer))
-        term.setTextColor(colors.lightGray)
-        term.setCursorPos(2, height - 1)
-        term.write("[action] Restart  [alt] Menu  (" .. countdown .. ")")
-
     elseif state == "lose" then
         term.setTextColor(colors.red)
         term.setCursorPos(2, 4)
@@ -592,11 +587,6 @@ function game.draw()
         term.setTextColor(colors.gray)
         term.setCursorPos(2, textY + #messageLines + 2)
         term.write("The Wumpus was in room " .. wumpusRoom)
-
-        local countdown = math.max(0, 15 - math.floor(gameOverTimer))
-        term.setTextColor(colors.lightGray)
-        term.setCursorPos(2, height - 1)
-        term.write("[action] Restart  [alt] Menu  (" .. countdown .. ")")
     end
 
     term.setBackgroundColor(colors.black)

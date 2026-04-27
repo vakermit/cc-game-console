@@ -237,16 +237,7 @@ end
 function game.update(dt, input)
     local p1 = input.getPlayer(1)
 
-    if gameOverFlag then
-        gameOverTimer = gameOverTimer + dt
-        if p1.wasPressed("action") then
-            initGame()
-            return
-        elseif p1.wasPressed("alt") or gameOverTimer >= 15 then
-            return "menu"
-        end
-        return
-    end
+    if gameOverFlag then return "menu" end
 
     if mode == "main" then
         if p1.wasPressed("left") then
@@ -715,13 +706,6 @@ function game.draw()
     term.setTextColor(colors.blue)
     term.write("STAR TREK")
 
-    if gameOverFlag then
-        local countdown = math.max(0, 15 - math.floor(gameOverTimer))
-        local hint = "[action] Restart  [alt] Menu  (" .. countdown .. ")"
-        term.setTextColor(colors.lightGray)
-        term.setCursorPos(2, height)
-        term.write(hint)
-    end
 end
 
 function game.cleanup()

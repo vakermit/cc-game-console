@@ -184,20 +184,7 @@ end
 function game.update(dt, input)
     local p1 = input.getPlayer(1)
 
-    if gameOver then
-        gameOverTimer = gameOverTimer + dt
-        if p1.wasPressed("action") then
-            score = 0
-            lives = 3
-            initDots()
-            initPowerDots()
-            initRound()
-            return
-        elseif p1.wasPressed("alt") or gameOverTimer >= 10 then
-            return "menu"
-        end
-        return
-    end
+    if gameOver then return "menu" end
 
     if p1.wasPressed("up") then playerNext = "up" end
     if p1.wasPressed("down") then playerNext = "down" end
@@ -351,10 +338,6 @@ function game.draw()
         term.setCursorPos(mx - 2, my + 1)
         term.write("Score: " .. score)
 
-        local countdown = math.max(0, 10 - math.floor(gameOverTimer))
-        local hint = "[action] Restart  [alt] Menu  (" .. countdown .. ")"
-        term.setCursorPos(math.floor((width - #hint) / 2), my + 3)
-        term.write(hint)
     end
 end
 

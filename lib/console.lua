@@ -176,6 +176,35 @@ function console.showMenu(games)
     return result.item.data
 end
 
+local function drawTitleArt(gw, gh, words, controls)
+    local lineHeight = 6
+    local totalHeight = #words * lineHeight - 1
+    local ty = math.max(1, math.floor((gh - totalHeight) / 2) - 4)
+
+    for i, word in ipairs(words) do
+        local wordW = block_letters.width(word)
+        local wx = math.max(1, math.floor((gw - wordW) / 2) + 1)
+        local wy = ty + (i - 1) * lineHeight
+        block_letters.draw(wx, wy, word)
+    end
+
+    local menuY = ty + totalHeight + 2
+
+    if controls then
+        local cy = menuY + 3
+        term.setTextColor(colors.lightGray)
+        term.setBackgroundColor(colors.black)
+        for _, ctrl in ipairs(controls) do
+            local line = ctrl.action .. " - " .. ctrl.description
+            term.setCursorPos(math.floor((gw - #line) / 2) + 1, cy)
+            term.write(line)
+            cy = cy + 1
+        end
+    end
+
+    return menuY
+end
+
 local function showTitleScreen(game)
     drawStatus(game.title())
 
@@ -185,159 +214,218 @@ local function showTitleScreen(game)
     for word in title:gmatch("%S+") do
         table.insert(words, word)
     end
+    local controls = game.getControls and game.getControls() or nil
 
-    local titleSel = 1
+    local old = term.redirect(gameWin)
+    term.setBackgroundColor(colors.black)
+    term.clear()
+    local menuY = drawTitleArt(gw, gh, words, controls)
+    term.redirect(old)
+
+    local titleMenu = Menu.new({
+        x = 1,
+        y = menuY,
+        width = gw,
+        centered = true,
+        max_rows = 2,
+        up_action = config.actions.menu_up,
+        down_action = config.actions.menu_down,
+        select_action = config.actions.menu_select,
+        items = {
+            { label = "Play", color = colors.white },
+            { label = function()
+                return "Sound: " .. (sound.isEnabled() and "ON" or "OFF")
+              end,
+              color = colors.gray, action = "toggle", value = sound.isEnabled() },
+        },
+    })
+
+    old = term.redirect(gameWin)
+
+    local timerId = os.startTimer(config.system.tickRate)
+    while running and not resetFlag and not powerFlag do
+        local event, p1 = os.pullEvent()
+        if event == "timer" and p1 == timerId then
+            input.tick()
+            local result = titleMenu:handleInput(input)
+            if result then
+                if result.type == "select" then
+                    sound.menuSelect()
+                    term.redirect(old)
+                    return true
+                elseif result.type == "toggle" then
+                    sound.setEnabled(result.value)
+                    sound.menuBeep()
+                elseif result.type == "navigate" then
+                    sound.menuBeep()
+                end
+            end
+            term.setBackgroundColor(colors.black)
+            term.clear()
+            drawTitleArt(gw, gh, words, controls)
+            titleMenu:draw()
+            timerId = os.startTimer(config.system.tickRate)
+        end
+    end
+
+    term.redirect(old)
+    return false
+end
+
+local function showEndGameMenu()
+    local gw, gh = gameWin.getSize()
+
+    local endMenu = Menu.new({
+        x = 1,
+        y = gh,
+        width = gw,
+        centered = true,
+        horizontal = true,
+        max_columns = 2,
+        highlight_fg = colors.black,
+        highlight_bg = colors.white,
+        default_color = colors.lightGray,
+        up_action = "p1_left",
+        down_action = "p1_right",
+        select_action = config.actions.menu_select,
+        items = {
+            { label = "Replay", data = "replay" },
+            { label = "Exit", data = "exit" },
+        },
+    })
+
+    drawStatus("Game Over")
+
+    local old = term.redirect(gameWin)
+    local elapsed = 0
+    local timeout = 20
     local timerId = os.startTimer(config.system.tickRate)
 
     while running and not resetFlag and not powerFlag do
         local event, p1 = os.pullEvent()
         if event == "timer" and p1 == timerId then
             input.tick()
+            elapsed = elapsed + config.system.tickRate
 
-            if input.wasPressed(config.actions.menu_down) then
-                titleSel = titleSel == 1 and 2 or 1
-                sound.menuBeep()
-            elseif input.wasPressed(config.actions.menu_up) then
-                titleSel = titleSel == 1 and 2 or 1
-                sound.menuBeep()
-            elseif input.wasPressed(config.actions.menu_select) then
-                if titleSel == 1 then
+            if elapsed >= timeout then
+                term.redirect(old)
+                sound.menuSelect()
+                return "replay"
+            end
+
+            local result = endMenu:handleInput(input)
+            if result then
+                if result.type == "select" then
+                    term.redirect(old)
                     sound.menuSelect()
-                    return true
-                else
-                    sound.setEnabled(not sound.isEnabled())
+                    return result.item.data == "replay" and "replay" or "exit"
+                elseif result.type == "navigate" then
                     sound.menuBeep()
                 end
             end
 
-            local old = term.redirect(gameWin)
+            local countdownLabel = "(" .. math.max(0, math.floor(timeout - elapsed)) .. ")"
+            term.setCursorPos(math.floor((gw - #countdownLabel) / 2), gh - 1)
+            term.setTextColor(colors.lightGray)
             term.setBackgroundColor(colors.black)
-            term.setTextColor(colors.white)
-            term.clear()
+            term.write(countdownLabel)
 
-            local lineHeight = 6
-            local totalHeight = #words * lineHeight - 1
-            local ty = math.max(1, math.floor((gh - totalHeight) / 2) - 4)
-
-            for i, word in ipairs(words) do
-                local wordW = block_letters.width(word)
-                local wx = math.max(1, math.floor((gw - wordW) / 2) + 1)
-                local wy = ty + (i - 1) * lineHeight
-                block_letters.draw(wx, wy, word)
-            end
-
-            local menuY = ty + totalHeight + 2
-
-            local playLabel = "Play"
-            term.setCursorPos(math.floor((gw - #playLabel) / 2), menuY)
-            if titleSel == 1 then
-                term.setBackgroundColor(colors.white)
-                term.setTextColor(colors.black)
-                term.write(" " .. playLabel .. " ")
-                term.setBackgroundColor(colors.black)
-            else
-                term.setTextColor(colors.white)
-                term.write(playLabel)
-            end
-
-            local soundLabel = "Sound: " .. (sound.isEnabled() and "ON" or "OFF")
-            term.setCursorPos(math.floor((gw - #soundLabel) / 2), menuY + 1)
-            if titleSel == 2 then
-                term.setBackgroundColor(colors.white)
-                term.setTextColor(colors.black)
-                term.write(" " .. soundLabel .. " ")
-                term.setBackgroundColor(colors.black)
-            else
-                term.setTextColor(colors.gray)
-                term.write(soundLabel)
-            end
-
-            if game.getControls then
-                local controls = game.getControls()
-                local cy = menuY + 3
-                term.setTextColor(colors.lightGray)
-                for _, ctrl in ipairs(controls) do
-                    local line = ctrl.action .. " - " .. ctrl.description
-                    term.setCursorPos(math.floor((gw - #line) / 2) + 1, cy)
-                    term.write(line)
-                    cy = cy + 1
-                end
-            end
-
-            term.redirect(old)
+            endMenu:draw()
             timerId = os.startTimer(config.system.tickRate)
         end
     end
-    return false
+
+    term.redirect(old)
+    return "exit"
 end
 
 function console.runGame(game)
     resetFlag = false
-    clearGame()
 
-    if not showTitleScreen(game) then
+    while true do
         clearGame()
-        return
-    end
 
-    clearGame()
+        if not showTitleScreen(game) then
+            clearGame()
+            return
+        end
 
-    local old = term.redirect(gameWin)
-    local ok, err = pcall(game.init, console)
-    term.redirect(old)
+        clearGame()
 
-    if not ok then
-        drawStatus("Error: " .. tostring(err))
-        os.sleep(3)
-        return
-    end
+        local old = term.redirect(gameWin)
+        local ok, err = pcall(game.init, console)
+        term.redirect(old)
 
-    drawStatus("Playing: " .. game.title())
+        if not ok then
+            drawStatus("Error: " .. tostring(err))
+            os.sleep(3)
+            return
+        end
 
-    local tickRate = config.system.tickRate
-    local timerId = os.startTimer(tickRate)
-    local backHoldCount = 0
-    local backAction1 = config.actions.back_hold1
-    local backAction2 = config.actions.back_hold2
-    local backThreshold = config.actions.back_ticks
+        drawStatus("Playing: " .. game.title())
 
-    while running and not resetFlag and not powerFlag do
-        local event, p1 = os.pullEvent()
-        if event == "timer" and p1 == timerId then
-            input.tick()
+        local tickRate = config.system.tickRate
+        local timerId = os.startTimer(tickRate)
+        local backHoldCount = 0
+        local backAction1 = config.actions.back_hold1
+        local backAction2 = config.actions.back_hold2
+        local backThreshold = config.actions.back_ticks
+        local gameEnded = false
 
-            if input.isDown(backAction1) and input.isDown(backAction2) then
-                backHoldCount = backHoldCount + 1
-                if backHoldCount >= backThreshold then
-                    break
+        while running and not resetFlag and not powerFlag do
+            local event, p1 = os.pullEvent()
+            if event == "timer" and p1 == timerId then
+                input.tick()
+
+                if input.isDown(backAction1) and input.isDown(backAction2) then
+                    backHoldCount = backHoldCount + 1
+                    if backHoldCount >= backThreshold then
+                        pcall(game.cleanup)
+                        clearGame()
+                        return
+                    end
+                else
+                    backHoldCount = 0
                 end
-            else
-                backHoldCount = 0
-            end
 
-            old = term.redirect(gameWin)
-            local gok, gerr = pcall(game.update, tickRate, input)
-            if gok then
-                if gerr == "menu" then
-                    term.redirect(old)
-                    break
+                old = term.redirect(gameWin)
+                local gok, gerr = pcall(game.update, tickRate, input)
+                if gok then
+                    if gerr == "menu" then
+                        pcall(game.draw)
+                        term.redirect(old)
+                        gameEnded = true
+                        break
+                    end
+                    pcall(game.draw)
                 end
-                pcall(game.draw)
-            end
-            term.redirect(old)
+                term.redirect(old)
 
-            if not gok then
-                drawStatus("Crash: " .. tostring(gerr))
-                os.sleep(3)
-                break
-            end
+                if not gok then
+                    drawStatus("Crash: " .. tostring(gerr))
+                    os.sleep(3)
+                    pcall(game.cleanup)
+                    clearGame()
+                    return
+                end
 
-            timerId = os.startTimer(tickRate)
+                timerId = os.startTimer(tickRate)
+            end
+        end
+
+        pcall(game.cleanup)
+
+        if not gameEnded then
+            clearGame()
+            return
+        end
+
+        local choice = showEndGameMenu()
+        if choice ~= "replay" then
+            clearGame()
+            return
         end
     end
-
-    pcall(game.cleanup)
-    clearGame()
 end
 
 function console.networkListener()

@@ -137,13 +137,38 @@ function MenuGroup:draw()
     end
 end
 
-function MenuGroup:run(tickRate, inputState)
+function MenuGroup:run(tickRate, inputState, opts)
+    opts = opts or {}
+    local timeout = opts.timeout
+    local timeout_index = opts.timeout_index
+    local elapsed = 0
     local timerId = os.startTimer(tickRate)
 
     while true do
         local event, p1 = os.pullEvent()
         if event == "timer" and p1 == timerId then
             inputState.tick()
+            elapsed = elapsed + tickRate
+
+            if timeout and elapsed >= timeout then
+                local targetMenu, targetIdx
+                if timeout_index then
+                    for mi, menu in ipairs(self.menus) do
+                        if timeout_index <= menu:getItemCount() then
+                            targetMenu = menu
+                            targetIdx = timeout_index
+                            break
+                        end
+                        timeout_index = timeout_index - menu:getItemCount()
+                    end
+                end
+                local item = targetMenu and targetMenu:getItem(targetIdx)
+                if item then
+                    return { type = "timeout", index = targetIdx, item = item,
+                             menu = targetMenu, elapsed = elapsed }
+                end
+            end
+
             local result = self:handleInput(inputState)
             if result then
                 if result.type == "select" then

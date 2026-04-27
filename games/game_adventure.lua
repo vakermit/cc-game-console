@@ -174,16 +174,7 @@ end
 function game.update(dt, input)
     local p1 = input.getPlayer(1)
 
-    if gameOverFlag then
-        gameOverTimer = gameOverTimer + dt
-        if p1.wasPressed("action") then
-            initGame()
-            return
-        elseif p1.wasPressed("alt") or gameOverTimer >= 10 then
-            return "menu"
-        end
-        return
-    end
+    if gameOverFlag then return "menu" end
 
     local room = rooms[currentRoom]
     local nx, ny = playerX, playerY
@@ -385,11 +376,6 @@ function game.draw()
         term.write(" " .. msg .. " ")
         term.setBackgroundColor(colors.black)
 
-        local countdown = math.max(0, 10 - math.floor(gameOverTimer))
-        local hint = "[action] Restart  [alt] Menu  (" .. countdown .. ")"
-        term.setTextColor(colors.lightGray)
-        term.setCursorPos(math.floor((width - #hint) / 2), my + 2)
-        term.write(hint)
     end
 end
 

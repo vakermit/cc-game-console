@@ -1417,16 +1417,7 @@ end
 function game.update(dt, input)
     local p1 = input.getPlayer(1)
 
-    if gameOverFlag then
-        gameOverTimer = gameOverTimer + dt
-        if p1.wasPressed("action") then
-            initGame()
-            return
-        elseif p1.wasPressed("alt") or gameOverTimer >= 15 then
-            return "menu"
-        end
-        return
-    end
+    if gameOverFlag then return "menu" end
 
     if state == "intro" then
         setMessage("Isla Nubla has gone dark. Your team of 4 must cross " ..
@@ -1727,12 +1718,6 @@ function game.draw()
         term.setCursorPos(2, textY + #messageLines + 3)
         term.write("Final score: " .. (alive() * 100 + food + fuel + ammo * 5))
 
-        local countdown = math.max(0, 15 - math.floor(gameOverTimer))
-        local hint = "[action] Restart  [alt] Menu  (" .. countdown .. ")"
-        term.setTextColor(colors.lightGray)
-        term.setCursorPos(2, height - 1)
-        term.write(hint)
-
     elseif state == "lose" then
         term.setTextColor(colors.red)
         term.setCursorPos(2, textY)
@@ -1745,12 +1730,6 @@ function game.draw()
         term.setTextColor(colors.gray)
         term.setCursorPos(2, textY + #messageLines + 3)
         term.write("Survived " .. day .. " days. " .. alive() .. " of 4 remaining.")
-
-        local countdown = math.max(0, 15 - math.floor(gameOverTimer))
-        local hint = "[action] Restart  [alt] Menu  (" .. countdown .. ")"
-        term.setTextColor(colors.lightGray)
-        term.setCursorPos(2, height - 1)
-        term.write(hint)
     end
 
     term.setBackgroundColor(colors.black)

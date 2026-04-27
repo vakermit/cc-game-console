@@ -187,6 +187,12 @@ function Menu:draw()
 
     local drawY = self.y
 
+    if self.horizontal and drawY >= 1 and drawY <= th then
+        term.setCursorPos(self.x, drawY)
+        term.setBackgroundColor(self.default_bg)
+        term.write(string.rep(" ", math.min(menuWidth, tw - self.x + 1)))
+    end
+
     if needsScroll and self.scroll_offset > 0 then
         if drawY >= 1 and drawY <= th then
             local ax = self:_arrowX(menuWidth)
@@ -200,16 +206,38 @@ function Menu:draw()
         drawY = drawY + 1
     end
 
+    local hSpacing = 0
+    if self.horizontal and endIdx >= startIdx then
+        local totalLabelW = 0
+        for i = startIdx, endIdx do
+            totalLabelW = totalLabelW + #resolveLabel(self.items[i]) + 2
+        end
+        local count = endIdx - startIdx + 1
+        if count > 1 then
+            hSpacing = math.floor((menuWidth - totalLabelW) / (count + 1))
+        end
+    end
+
+    local hCursor = self.x + (self.horizontal and hSpacing or 0)
+
     for i = startIdx, endIdx do
         local item = self.items[i]
         local label = resolveLabel(item)
         local isSelected = (i == self.selected)
-        local cy = drawY + (i - startIdx)
+        local showHighlight = isSelected and self.focused
+
+        local cx, cy
+        if self.horizontal then
+            cx = hCursor
+            cy = drawY
+            hCursor = hCursor + (showHighlight and #label + 2 or #label) + hSpacing
+        else
+            cy = drawY + (i - startIdx)
+            cx = self:_itemX(label, showHighlight, menuWidth)
+        end
 
         if cy < 1 or cy > th then break end
-
-        local showHighlight = isSelected and self.focused
-        local cx = self:_itemX(label, showHighlight, menuWidth)
+        if cx < 1 then cx = 1 end
 
         term.setCursorPos(cx, cy)
         if showHighlight then
@@ -249,13 +277,26 @@ function Menu:draw()
     term.setTextColor(self.default_color)
 end
 
-function Menu:run(tickRate, inputState)
+function Menu:run(tickRate, inputState, opts)
+    opts = opts or {}
+    local timeout = opts.timeout
+    local timeout_index = opts.timeout_index or #self.items
+    local elapsed = 0
     local timerId = os.startTimer(tickRate)
 
     while true do
         local event, p1 = os.pullEvent()
         if event == "timer" and p1 == timerId then
             inputState.tick()
+            elapsed = elapsed + tickRate
+
+            if timeout and elapsed >= timeout then
+                local item = self.items[timeout_index]
+                if item then
+                    return { type = "timeout", index = timeout_index, item = item, elapsed = elapsed }
+                end
+            end
+
             local result = self:handleInput(inputState)
             if result then
                 if result.type == "select" then
@@ -291,13 +332,35 @@ function Menu:hitTest(screenX, screenY)
         testY = testY + 1
     end
 
+    local hSpacing = 0
+    if self.horizontal and endIdx >= startIdx then
+        local totalLabelW = 0
+        for i = startIdx, endIdx do
+            totalLabelW = totalLabelW + #resolveLabel(self.items[i]) + 2
+        end
+        local count = endIdx - startIdx + 1
+        if count > 1 then
+            hSpacing = math.floor((menuWidth - totalLabelW) / (count + 1))
+        end
+    end
+
+    local hCursor = self.x + (self.horizontal and hSpacing or 0)
+
     for i = startIdx, endIdx do
         local item = self.items[i]
         local label = resolveLabel(item)
         local showHighlight = (i == self.selected) and self.focused
-        local cy = testY + (i - startIdx)
-        local cx = self:_itemX(label, showHighlight, menuWidth)
         local displayLen = showHighlight and (#label + 2) or #label
+
+        local cx, cy
+        if self.horizontal then
+            cx = hCursor
+            cy = testY
+            hCursor = hCursor + displayLen + hSpacing
+        else
+            cy = testY + (i - startIdx)
+            cx = self:_itemX(label, showHighlight, menuWidth)
+        end
 
         if screenY == cy and screenX >= cx and screenX < cx + displayLen then
             return { type = "item", index = i, item = item }

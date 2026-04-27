@@ -50,16 +50,7 @@ function game.update(dt, input)
     local p1 = input.getPlayer(1)
     local p2 = input.getPlayer(2)
 
-    if gameOver then
-        gameOverTimer = gameOverTimer + dt
-        if p1.wasPressed("action") then
-            initRound()
-            return
-        elseif p1.wasPressed("alt") or gameOverTimer >= 10 then
-            return "menu"
-        end
-        return
-    end
+    if gameOver then return "menu" end
 
     if p1.isDown("up") and paddle1Y > 1 then
         paddle1Y = paddle1Y - 1
@@ -127,10 +118,6 @@ function game.draw()
         term.setCursorPos(math.floor((width - #msg) / 2), math.floor(height / 2))
         term.write(msg)
 
-        local countdown = math.max(0, 10 - math.floor(gameOverTimer))
-        local hint = "[action] Restart  [alt] Menu  (" .. countdown .. ")"
-        term.setCursorPos(math.floor((width - #hint) / 2), math.floor(height / 2) + 2)
-        term.write(hint)
     end
 end
 

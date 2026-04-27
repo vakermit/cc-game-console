@@ -105,16 +105,7 @@ function game.update(dt, input)
         return
     end
 
-    if gameOverFlag then
-        gameOverTimer = gameOverTimer + dt
-        if p1.wasPressed("action") then
-            initRound()
-            return
-        elseif p1.wasPressed("alt") or gameOverTimer >= 10 then
-            return "menu"
-        end
-        return
-    end
+    if gameOverFlag then return "menu" end
 
     if p1.wasPressed("up") and dirs[1] ~= "down" then nextDirs[1] = "up" end
     if p1.wasPressed("down") and dirs[1] ~= "up" then nextDirs[1] = "down" end
@@ -266,11 +257,6 @@ function game.draw()
         term.setCursorPos(math.floor((width - #scoreLine) / 2), my + 1)
         term.write(scoreLine)
 
-        local countdown = math.max(0, 10 - math.floor(gameOverTimer))
-        local hint = "[action] Restart  [alt] Menu  (" .. countdown .. ")"
-        term.setTextColor(colors.lightGray)
-        term.setCursorPos(math.floor((width - #hint) / 2), my + 3)
-        term.write(hint)
     end
 end
 
