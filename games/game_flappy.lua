@@ -10,9 +10,9 @@ local gameOverFlag, gameOverTimer
 local tickAccum
 local started
 
-local gravity = 0.4
-local flapStrength = -2.5
-local pipeSpeed = 1
+local gravity = 0.2
+local flapStrength = -0.5
+local pipeSpeed = 0.5
 
 local function addPipe()
     local gapY = math.random(4, height - gapSize - 2)
