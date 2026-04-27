@@ -17,6 +17,8 @@ local function status(msg)
     term.redirect(old)
 end
 
+shell.run("reset-monitor")
+
 status("Waiting for startup...")
 sleep(15)
 while true do

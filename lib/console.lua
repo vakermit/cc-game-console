@@ -2,6 +2,8 @@ local input = require("lib.input")
 local config = require("config")
 local block_letters = require("lib.block_letters")
 local sound = require("lib.sound")
+local Menu = require("lib.menu")
+local MenuGroup = require("lib.menugroup")
 
 local console = {}
 
@@ -99,76 +101,79 @@ local menuColors = {
 }
 
 function console.showMenu(games)
-    local totalItems = #games + 1
-    local selected = 1
-
     drawStatus("game-console - Select a game")
-    local timerId = os.startTimer(config.system.tickRate)
 
-    while running and not powerFlag do
-        local event, p1 = os.pullEvent()
-        if event == "timer" and p1 == timerId then
-            input.tick()
+    local gw, gh = gameWin.getSize()
 
-            if input.wasPressed(config.actions.menu_up) then
-                selected = selected - 1
-                if selected < 1 then selected = totalItems end
-                sound.menuBeep()
-            elseif input.wasPressed(config.actions.menu_down) then
-                selected = selected + 1
-                if selected > totalItems then selected = 1 end
-                sound.menuBeep()
-            elseif input.wasPressed(config.actions.menu_select) then
-                sound.menuSelect()
-                if selected == totalItems then
-                    return nil
-                end
-                return games[selected]
-            end
-
-            local old = term.redirect(gameWin)
-            term.setBackgroundColor(colors.black)
-            term.setTextColor(colors.white)
-            term.clear()
-
-            local gw, gh = gameWin.getSize()
-            local gameStartY = math.max(1, math.floor((gh - #games) / 2) - 1)
-
-            for i, g in ipairs(games) do
-                local title = g.title()
-                local itemColor = menuColors[((i - 1) % #menuColors) + 1]
-                term.setCursorPos(math.floor((gw - #title) / 2), gameStartY + i - 1)
-                if selected == i then
-                    term.setBackgroundColor(itemColor)
-                    term.setTextColor(colors.black)
-                    term.write(" " .. title .. " ")
-                else
-                    term.setBackgroundColor(colors.black)
-                    term.setTextColor(itemColor)
-                    term.write(title)
-                end
-            end
-
-            local shutdownY = gh - 1
-            local shutdownLabel = "Shutdown"
-            term.setCursorPos(math.floor((gw - #shutdownLabel) / 2), shutdownY)
-            if selected == totalItems then
-                term.setBackgroundColor(colors.red)
-                term.setTextColor(colors.white)
-                term.write(" " .. shutdownLabel .. " ")
-            else
-                term.setBackgroundColor(colors.black)
-                term.setTextColor(colors.gray)
-                term.write(shutdownLabel)
-            end
-
-            term.setBackgroundColor(colors.black)
-            term.redirect(old)
-            timerId = os.startTimer(config.system.tickRate)
-        end
+    local gameItems = {}
+    for i, g in ipairs(games) do
+        local itemColor = menuColors[((i - 1) % #menuColors) + 1]
+        table.insert(gameItems, {
+            label = g.title(),
+            color = itemColor,
+            highlight_bg = itemColor,
+            highlight_fg = colors.black,
+            data = g,
+        })
     end
 
-    return nil
+    local gameMenuY = math.max(1, math.floor((gh - #games - 2) / 2))
+
+    local gameMenu = Menu.new({
+        x = 1,
+        y = gameMenuY,
+        width = gw,
+        centered = true,
+        max_rows = gh - 2,
+        up_action = config.actions.menu_up,
+        down_action = config.actions.menu_down,
+        select_action = config.actions.menu_select,
+        items = gameItems,
+    })
+
+    local shutdownMenu = Menu.new({
+        x = 1,
+        y = gh,
+        width = gw,
+        centered = true,
+        max_rows = 1,
+        focused = false,
+        up_action = config.actions.menu_up,
+        down_action = config.actions.menu_down,
+        select_action = config.actions.menu_select,
+        items = {
+            { label = "Shutdown", color = colors.gray,
+              highlight_bg = colors.red, highlight_fg = colors.white },
+        },
+    })
+
+    local group = MenuGroup.new({
+        menus = { gameMenu, shutdownMenu },
+        up_action = config.actions.menu_up,
+        down_action = config.actions.menu_down,
+        select_action = config.actions.menu_select,
+    })
+
+    group:onEvent(function(ev)
+        if ev.type == "navigate" or ev.type == "focus" then
+            sound.menuBeep()
+        end
+    end)
+
+    local old = term.redirect(gameWin)
+    term.setBackgroundColor(colors.black)
+    term.clear()
+
+    local result = group:run(config.system.tickRate, input)
+    term.redirect(old)
+
+    if not result or not result.item.data then
+        sound.menuSelect()
+        return nil
+    end
+
+    sound.menuSelect()
+    return result.item.data
 end
 
 local function showTitleScreen(game)

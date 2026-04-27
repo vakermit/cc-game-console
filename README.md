@@ -26,6 +26,8 @@ config.lua           Hardware mappings, network channel, system settings
 transmitter.lua      Signal transmitter program (runs on input computers)
 lib/
   console.lua        Core console: menu, game loop, network/redstone listeners
+  menu.lua           Reusable menu widget (select, toggle, scroll, hitTest)
+  menugroup.lua      Focus manager composing multiple menus with edge transfer
   input.lua          Input state machine (held/pressed/released per action)
   sound.lua          Queue-based audio system (notes, sounds, DFPWM streaming)
   block_letters.lua  5x5 bitmap font renderer for title screens
