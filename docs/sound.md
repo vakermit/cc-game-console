@@ -22,13 +22,13 @@ Game code                    Sound queue              Speaker peripheral
    │                     yields between items               │
 ```
 
-The listener coroutine is started in `vgame.lua` as the 4th `parallel.waitForAny` worker. Games never interact with the speaker directly.
+The listener coroutine is started in `game-console.lua` as the 4th `parallel.waitForAny` worker. Games never interact with the speaker directly.
 
 ## API Reference
 
 ### `sound.init()`
 
-Finds the speaker peripheral and reads the `config.sound.enabled` default. Called once at startup in `vgame.lua`.
+Finds the speaker peripheral and reads the `config.sound.enabled` default. Called once at startup in `game-console.lua`.
 
 ### `sound.playNote(instrument, volume, pitch)`
 
@@ -129,7 +129,7 @@ Place `.dfpwm` files in the `sounds/` directory on the gaming computer. Games re
 sound.playFile("theme.dfpwm")
 ```
 
-The Audio Test tool (`vgame --test-audio`) has a Files section that lists all `.dfpwm` files in `sounds/` for testing playback.
+The Audio Test tool (`game-console --test-audio`) has a Files section that lists all `.dfpwm` files in `sounds/` for testing playback.
 
 ## Configuration
 

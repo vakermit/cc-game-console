@@ -18,8 +18,8 @@ Games are standalone Lua files that implement a simple interface (init, update, 
 ## Project Structure
 
 ```
-startup.lua          Auto-start: screensaver -> vgame loop
-vgame.lua            Game console - menu, game selection, game loop
+startup.lua          Auto-start: screensaver -> game-console loop
+game-console.lua     Game console - menu, game selection, game loop
 screensaver.lua      Screensaver engine - discovers and cycles screen modules
 reset.lua            Utility - clears the monitor
 config.lua           Hardware mappings, network channel, system settings
@@ -55,7 +55,7 @@ games/
 1. **Transmitter computers** - Place computers with wired modems, connect to network. Upload `transmitter.lua` and run it on each.
 2. **Gaming computer** - Place a computer with an advanced monitor and wired modem on the same network. Upload all project files preserving the directory structure.
 3. **Configure** - Edit `config.lua` to map your transmitter computer IDs and redstone sides to player actions.
-4. **Run** - Execute `vgame` on the gaming computer.
+4. **Run** - Execute `game-console` on the gaming computer.
 
 ## Auto-Start
 
@@ -79,7 +79,7 @@ Menu navigation uses Player 1's up/down/action buttons. During gameplay, hold al
 
 ## Test Mode
 
-Run `vgame --test` to launch an input test visualizer that shows the real-time state of all 12 inputs (6 per player) without loading a game.
+Run `game-console --test` to launch an input test visualizer that shows the real-time state of all 12 inputs (6 per player) without loading a game.
 
 ## Writing Games
 
@@ -95,7 +95,7 @@ Additional documentation is in the [docs/](docs/) directory:
 
 ## Disclaimer
 
-The games included in this repository are **independent, original sample implementations** created for educational and personal use. They are simple demonstrations of the vgame platform's capabilities and are not affiliated with, endorsed by, or derived from any commercial video game products.
+The games included in this repository are **independent, original sample implementations** created for educational and personal use. They are simple demonstrations of the game-console platform's capabilities and are not affiliated with, endorsed by, or derived from any commercial video game products.
 
 Any resemblance to existing commercial games is due to the generic nature of the game mechanics involved (e.g., bouncing a ball between paddles, shooting descending enemies). These mechanics are common game design patterns that predate any specific commercial implementation and are not protected by copyright. No proprietary code, assets, names, or trademarks from any commercial game have been used.
 

@@ -32,6 +32,6 @@ while true do
     end
 
     status("Starting game console...")
-    shell.run("vgame")
+    shell.run("game-console")
     sleep(1)
 end

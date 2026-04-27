@@ -2,7 +2,7 @@
 
 ## Overview
 
-vgame is a split-architecture game console. Physical input is captured by dedicated transmitter computers and relayed over a wired modem network to a central gaming computer that runs the game loop and renders output.
+game-console is a split-architecture game console. Physical input is captured by dedicated transmitter computers and relayed over a wired modem network to a central gaming computer that runs the game loop and renders output.
 
 ## Components
 
@@ -12,7 +12,7 @@ Lightweight event-driven program. Monitors 4 redstone sides (top, left, right, b
 
 Each player needs 2 transmitter computers to cover all 6 actions (4 sides per computer, 6 actions per player). One computer is shared between players for the action/alt buttons.
 
-### Gaming Computer (`vgame.lua`)
+### Gaming Computer (`game-console.lua`)
 
 Entry point that boots the console and runs four coroutines in parallel:
 

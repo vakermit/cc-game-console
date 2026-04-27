@@ -18,7 +18,7 @@ All computers must be connected to the same wired modem network. Each transmitte
 
 Each transmitter runs `transmitter.lua` and monitors 4 redstone sides: **top, left, right, back** (front and bottom are not used).
 
-> **Note:** ComputerCraft sides are from the **computer's own perspective**, not yours. The computer faces toward you when placed (screen side = front), so its "left" and "right" are **mirrored** from your view when looking at the screen — like facing another person. If inputs seem swapped, this is likely why. Use `vgame --test` to verify mappings.
+> **Note:** ComputerCraft sides are from the **computer's own perspective**, not yours. The computer faces toward you when placed (screen side = front), so its "left" and "right" are **mirrored** from your view when looking at the screen — like facing another person. If inputs seem swapped, this is likely why. Use `game-console --test` to verify mappings.
 
 ### Default Layout (3 transmitters)
 
@@ -75,7 +75,7 @@ The color scheme also makes the physical build readable at a glance — you can 
 
 ## Gaming Computer
 
-The main computer runs `vgame.lua` and needs:
+The main computer runs `game-console.lua` and needs:
 
 - A wired modem connected to the same network as the transmitters
 - Optionally, an advanced monitor for a larger display (the console adapts to terminal size)
@@ -96,7 +96,7 @@ Both have a 0.3-second debounce to prevent double-triggering.
 Upload the following to the gaming computer, preserving directory structure:
 
 ```
-/vgame.lua
+/game-console.lua
 /config.lua
 /lib/console.lua
 /lib/input.lua
@@ -119,6 +119,6 @@ Upload to each transmitter:
 After wiring everything up:
 
 1. Start `transmitter.lua` on each transmitter (it shows live redstone state on screen)
-2. Run `vgame --test` on the gaming computer to launch the input test visualizer
+2. Run `game-console --test` on the gaming computer to launch the input test visualizer
 3. Press each physical button and verify the correct indicator lights up on screen
 4. If a button maps to the wrong action, adjust `config.keyMappings` in `config.lua`

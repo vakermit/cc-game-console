@@ -102,7 +102,7 @@ function console.showMenu(games)
     local totalItems = #games + 1
     local selected = 1
 
-    drawStatus("vgame - Select a game")
+    drawStatus("game-console - Select a game")
     local timerId = os.startTimer(config.system.tickRate)
 
     while running and not powerFlag do

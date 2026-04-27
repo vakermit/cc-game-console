@@ -1,4 +1,4 @@
-# vgame - Game Interface Specification
+# game-console - Game Interface Specification
 
 ## Creating a New Game
 
@@ -71,13 +71,13 @@ Key mappings in config.lua map (computerID, side) -> logical action (e.g., "p1_u
 
 ## Test Mode
 
-Run `vgame --test` to launch the input test visualizer. Shows real-time state of all 12 inputs (6 per player). Does not appear in the game selection menu. Hold alt+action to exit.
+Run `game-console --test` to launch the input test visualizer. Shows real-time state of all 12 inputs (6 per player). Does not appear in the game selection menu. Hold alt+action to exit.
 
 ## Hardware Setup
 
 - 4 transmitter computers: run transmitter.lua, wired to modem network (2 per player)
 - Each transmitter uses 4 redstone sides: top, left, right, back
-- 1 gaming computer: run vgame.lua, wired to same modem network
+- 1 gaming computer: run game-console.lua, wired to same modem network
 - Power button: redstone signal on "top" side of gaming computer
 - Reset button: redstone signal on "back" side of gaming computer
 - Computer IDs and side mappings configurable in config.lua

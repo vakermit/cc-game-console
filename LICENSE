@@ -26,7 +26,7 @@ SAMPLE GAMES DISCLAIMER
 
 The game implementations included in this repository (located in the "games/"
 directory) are independent, original works created solely as sample
-demonstrations of the vgame game console platform. They are provided for
+demonstrations of the game-console platform. They are provided for
 educational and personal, non-commercial use.
 
 These sample games implement generic, unprotectable game mechanics (such as
