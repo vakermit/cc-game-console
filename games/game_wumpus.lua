@@ -16,6 +16,8 @@ local visited
 local shootPath
 local resultWait
 local tunnelMenu
+local deathCause
+local lastEvent
 
 local cave = {
     [1]  = {2, 5, 8},
@@ -123,11 +125,12 @@ local function wakeWumpus()
     end
 end
 
-local function endGame(newState, msg, soundFn)
+local function endGame(newState, msg, soundFn, cause)
     state = newState
     setMessage(msg)
     gameOverFlag = true
     gameOverTimer = 0
+    deathCause = cause
     soundFn()
 end
 
@@ -185,6 +188,8 @@ local function initGame()
     mode = "move"
     gameOverFlag = false
     gameOverTimer = 0
+    deathCause = nil
+    lastEvent = nil
     resultWait = 0
     shootPath = {}
     setMessage("")
@@ -200,24 +205,25 @@ local function movePlayer(room)
             setMessage("The Wumpus was here! It startles and flees into the darkness.")
             wakeWumpus()
             if playerRoom == wumpusRoom then
-                endGame("lose", "The fleeing Wumpus trampled you! Game over.", sound.gameOver)
+                endGame("lose", "The fleeing Wumpus trampled you! Game over.", sound.gameOver, "wumpus")
                 return
             end
             state = "result"
             resultWait = 0
             return
         else
-            endGame("lose", "The Wumpus devours you! Its breath is worse than its bite. Game over.", sound.gameOver)
+            endGame("lose", "The Wumpus devours you! Its breath is worse than its bite. Game over.", sound.gameOver, "wumpus")
             return
         end
     end
 
     if hasPit(room) then
-        endGame("lose", "YYYIIIEEE! You fell into a bottomless pit! Game over.", sound.gameOver)
+        endGame("lose", "YYYIIIEEE! You fell into a bottomless pit! Game over.", sound.gameOver, "pit")
         return
     end
 
     if hasBat(room) then
+        lastEvent = "bats"
         setMessage("ZAP! Super Bats grab you and drop you somewhere random!")
         local safeRoom
         repeat
@@ -252,21 +258,21 @@ local function shootArrow(path)
         end
 
         if currentRoom == playerRoom then
-            endGame("lose", "OUCH! The arrow curved back and hit you! Game over.", sound.gameOver)
+            endGame("lose", "OUCH! The arrow curved back and hit you! Game over.", sound.gameOver, "arrow")
             return
         end
     end
 
     arrows = arrows - 1
     if arrows <= 0 then
-        endGame("lose", "You've run out of arrows. The Wumpus will find you eventually. Game over.", sound.gameOver)
+        endGame("lose", "You've run out of arrows. The Wumpus will find you eventually. Game over.", sound.gameOver, "wumpus")
         return
     end
 
     setMessage("The arrow flies into the darkness... and misses. The Wumpus stirs! (" .. arrows .. " arrows left)")
     wakeWumpus()
     if playerRoom == wumpusRoom then
-        endGame("lose", "The Wumpus, awakened by your arrow, stumbles into your room and eats you!", sound.gameOver)
+        endGame("lose", "The Wumpus, awakened by your arrow, stumbles into your room and eats you!", sound.gameOver, "wumpus")
         return
     end
     state = "result"
@@ -380,6 +386,7 @@ function game.update(dt, input)
         resultWait = resultWait + dt
         if p1.wasPressed("action") and resultWait > 0.3 then
             state = "play"
+            lastEvent = nil
             buildTunnelMenu()
         end
     end
@@ -458,6 +465,79 @@ local function drawHubView(centerRoom, neighbors, isShooting)
     end
 end
 
+local function drawArt(lines, x, y, color)
+    term.setTextColor(color)
+    for i, line in ipairs(lines) do
+        term.setCursorPos(x, y + i - 1)
+        term.write(line)
+    end
+end
+
+local artWumpus = {
+    "   @@@@@",
+    "  @@   @@",
+    " @@ o o @@",
+    "  @@ ~ @@",
+    " /@@@@@@@\\",
+    "/ @@@@@@@ \\",
+    "  || | ||",
+    "  '' ' ''",
+}
+
+local artWumpusDead = {
+    "   @@@@@",
+    "  @@   @@",
+    " @@ x x @@",
+    "  @@ ~ @@",
+    "  /@@@@@\\",
+    " /|@@@@@|\\",
+    "   |/ \\|",
+}
+
+local artPit = {
+    "     V",
+    "    \\|/",
+    "     O",
+    "    / \\",
+    "  ~~~~~~~~",
+    " /        \\",
+    "/   ....   \\",
+    "   (abyss)",
+}
+
+local artBats = {
+    "  /\\  ^  /\\",
+    " /  \\/|\\/  \\",
+    "/    \\|/    \\",
+    "      V",
+    "  /\\     /\\",
+    " /  \\   /  \\",
+    "/    \\ /    \\",
+}
+
+local artArrow = {
+    "        /",
+    "       /",
+    "   \\  / ",
+    "    \\/  ",
+    "    |\\  ",
+    "    | \\ ",
+    "    O   >-->",
+    "   /|\\",
+    "   / \\",
+}
+
+local artVictory = {
+    "    \\O/",
+    "     |",
+    "    / \\",
+    "",
+    "  @@@x@@@",
+    " @@     @@",
+    "  @@@@@@@",
+    "   |   |",
+}
+
 function game.draw()
     term.setBackgroundColor(colors.black)
     term.setTextColor(colors.white)
@@ -477,13 +557,13 @@ function game.draw()
     term.setBackgroundColor(colors.black)
 
     if state == "intro" then
-        local textY = 4
+        drawArt(artWumpus, math.floor(width / 2) - 5, 3, colors.red)
         term.setTextColor(colors.yellow)
-        term.setCursorPos(2, 3)
+        term.setCursorPos(2, 12)
         term.write("HUNT THE WUMPUS")
         term.setTextColor(colors.white)
         for i, line in ipairs(messageLines) do
-            term.setCursorPos(2, textY + i)
+            term.setCursorPos(2, 13 + i)
             term.write(line)
         end
         term.setTextColor(colors.lightGray)
@@ -563,8 +643,11 @@ function game.draw()
         end
 
     elseif state == "result" then
+        if lastEvent == "bats" then
+            drawArt(artBats, math.floor(width / 2) - 6, 3, colors.purple)
+        end
+        local textY = lastEvent == "bats" and 11 or math.floor(height / 2) - math.floor(#messageLines / 2)
         term.setTextColor(colors.white)
-        local textY = math.floor(height / 2) - math.floor(#messageLines / 2)
         for i, line in ipairs(messageLines) do
             term.setCursorPos(2, textY + i)
             term.write(line)
@@ -574,11 +657,12 @@ function game.draw()
         term.write("[action] Continue")
 
     elseif state == "win" then
+        drawArt(artVictory, math.floor(width / 2) - 5, 3, colors.lime)
         term.setTextColor(colors.lime)
-        term.setCursorPos(2, 4)
+        term.setCursorPos(2, 12)
         term.write("*** WUMPUS SLAIN! ***")
         term.setTextColor(colors.white)
-        local textY = 6
+        local textY = 13
         for i, line in ipairs(messageLines) do
             term.setCursorPos(2, textY + i)
             term.write(line)
@@ -588,11 +672,20 @@ function game.draw()
         term.write("Arrows remaining: " .. arrows)
 
     elseif state == "lose" then
+        local artX = math.floor(width / 2) - 6
+        if deathCause == "pit" then
+            drawArt(artPit, artX, 3, colors.cyan)
+        elseif deathCause == "wumpus" then
+            drawArt(artWumpus, artX, 3, colors.red)
+        elseif deathCause == "arrow" then
+            drawArt(artArrow, artX, 3, colors.orange)
+        end
+
+        local textY = 12
         term.setTextColor(colors.red)
-        term.setCursorPos(2, 4)
+        term.setCursorPos(2, textY)
         term.write("*** YOU DIED ***")
         term.setTextColor(colors.white)
-        local textY = 6
         for i, line in ipairs(messageLines) do
             term.setCursorPos(2, textY + i)
             term.write(line)
