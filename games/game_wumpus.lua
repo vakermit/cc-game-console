@@ -1,4 +1,5 @@
 local sound = require("lib.sound")
+local Menu = require("lib.menu")
 
 local game = {}
 
@@ -14,6 +15,7 @@ local gameOverFlag, gameOverTimer
 local visited
 local shootPath
 local resultWait
+local tunnelMenu
 
 local cave = {
     [1]  = {2, 5, 8},
@@ -152,6 +154,31 @@ local function initCave()
     visited[playerRoom] = true
 end
 
+local function buildTunnelMenu()
+    local neighbors = cave[playerRoom]
+    local items = {}
+    for _, room in ipairs(neighbors) do
+        table.insert(items, { label = tostring(room), data = room })
+    end
+    if tunnelMenu then
+        tunnelMenu:setItems(items)
+    else
+        local infoX = math.floor(width * 0.62)
+        tunnelMenu = Menu.new({
+            x = infoX,
+            y = 7,
+            max_rows = 3,
+            highlight_fg = colors.white,
+            highlight_bg = colors.gray,
+            default_color = colors.lightGray,
+            up_action = "p1_up",
+            down_action = "p1_down",
+            select_action = "p1_action",
+            items = items,
+        })
+    end
+end
+
 local function initGame()
     state = "intro"
     selected = 1
@@ -205,6 +232,7 @@ local function movePlayer(room)
     end
 
     state = "play"
+    buildTunnelMenu()
     sound.playNote("harp", 0.3, 8)
 end
 
@@ -292,18 +320,13 @@ function game.update(dt, input)
         if p1.wasPressed("action") then
             sound.stop()
             state = "play"
-            selected = 1
+            buildTunnelMenu()
         end
 
     elseif state == "play" then
         local neighbors = cave[playerRoom]
-        if p1.wasPressed("up") then
-            selected = selected - 1
-            if selected < 1 then selected = 3 end
-        elseif p1.wasPressed("down") then
-            selected = selected + 1
-            if selected > 3 then selected = 1 end
-        elseif p1.wasPressed("alt") then
+        local menuResult = tunnelMenu:handleInput(input)
+        if p1.wasPressed("alt") then
             if mode == "move" then
                 if arrows > 0 then
                     mode = "shoot"
@@ -314,52 +337,50 @@ function game.update(dt, input)
                 mode = "move"
             end
             sound.playNote("hat", 0.3, 12)
-        elseif p1.wasPressed("action") then
-            local targetRoom = neighbors[selected]
+        elseif menuResult and menuResult.type == "select" then
+            local targetRoom = menuResult.item.data
             if mode == "move" then
                 movePlayer(targetRoom)
-                selected = 1
             elseif arrows > 0 then
                 shootPath = {targetRoom}
                 state = "shoot_select"
-                selected = 1
+                local shootItems = {}
+                for _, r in ipairs(cave[targetRoom]) do
+                    table.insert(shootItems, { label = tostring(r), data = r })
+                end
+                tunnelMenu:setItems(shootItems)
                 setMessage("Arrow room 1: " .. targetRoom .. ". Select next room (action=add, alt=fire now)")
             end
         end
 
     elseif state == "shoot_select" then
-        local lastRoom = shootPath[#shootPath]
-        local neighbors = cave[lastRoom]
-        if p1.wasPressed("up") then
-            selected = selected - 1
-            if selected < 1 then selected = 3 end
-        elseif p1.wasPressed("down") then
-            selected = selected + 1
-            if selected > 3 then selected = 1 end
-        elseif p1.wasPressed("action") then
-            local nextRoom = neighbors[selected]
+        local menuResult = tunnelMenu:handleInput(input)
+        if menuResult and menuResult.type == "select" then
+            local nextRoom = menuResult.item.data
             table.insert(shootPath, nextRoom)
             if #shootPath >= 3 then
                 shootArrow(shootPath)
                 shootPath = {}
                 mode = "move"
-                selected = 1
             else
+                local shootItems = {}
+                for _, r in ipairs(cave[nextRoom]) do
+                    table.insert(shootItems, { label = tostring(r), data = r })
+                end
+                tunnelMenu:setItems(shootItems)
                 setMessage("Arrow room " .. #shootPath .. ": " .. nextRoom .. ". Select next room (action=add, alt=fire now)")
-                selected = 1
             end
         elseif p1.wasPressed("alt") then
             shootArrow(shootPath)
             shootPath = {}
             mode = "move"
-            selected = 1
         end
 
     elseif state == "result" then
         resultWait = resultWait + dt
         if p1.wasPressed("action") and resultWait > 0.3 then
             state = "play"
-            selected = 1
+            buildTunnelMenu()
         end
     end
 end
@@ -429,10 +450,11 @@ local function drawHubView(centerRoom, neighbors, isShooting)
         drawRoomAt(centerX, centerY, centerRoom, true, false, true)
     end
 
+    local menuSel = tunnelMenu and tunnelMenu:getSelected() or 0
     for i, neighbor in ipairs(neighbors) do
         local nx = centerX + hubOffsets[i][1]
         local ny = centerY + hubOffsets[i][2]
-        drawRoomAt(nx, ny, neighbor, false, i == selected, visited[neighbor])
+        drawRoomAt(nx, ny, neighbor, false, i == menuSel, visited[neighbor])
     end
 end
 
@@ -514,18 +536,9 @@ function game.draw()
         term.setCursorPos(infoX, wy)
         term.setTextColor(colors.lightGray)
         term.write("Tunnels:")
-        for i, neighbor in ipairs(neighbors) do
-            wy = wy + 1
-            term.setCursorPos(infoX, wy)
-            if i == selected then
-                term.setTextColor(colors.white)
-                term.setBackgroundColor(colors.gray)
-                term.write(" " .. neighbor .. " ")
-                term.setBackgroundColor(colors.black)
-            else
-                term.setTextColor(colors.lightGray)
-                term.write(" " .. neighbor)
-            end
+        if tunnelMenu then
+            tunnelMenu.y = wy + 1
+            tunnelMenu:draw()
         end
 
         term.setTextColor(colors.lightGray)

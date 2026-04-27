@@ -1,3 +1,5 @@
+local Menu = require("lib.menu")
+
 local game = {}
 
 local width, height
@@ -9,6 +11,7 @@ local mode, submode
 local selected, cursorX, cursorY
 local messageLines
 local gameOverFlag, gameOverTimer
+local cmdMenu
 local damageReport
 
 local SZ = 8
@@ -181,6 +184,27 @@ end
 local modeNames = { "nav", "warp", "phasers", "torpedo", "shields", "scan", "dock" }
 local modeLabels = { "NAV", "WRP", "PHA", "TOR", "SHI", "SCN", "DCK" }
 
+local function buildCmdMenu(y)
+    local items = {}
+    for i, label in ipairs(modeLabels) do
+        table.insert(items, { label = label, data = modeNames[i] })
+    end
+    cmdMenu = Menu.new({
+        x = 2,
+        y = y + 1,
+        width = width - 2,
+        horizontal = true,
+        max_columns = #modeLabels,
+        highlight_fg = colors.white,
+        highlight_bg = colors.gray,
+        default_color = colors.lightGray,
+        up_action = "p1_left",
+        down_action = "p1_right",
+        select_action = "p1_action",
+        items = items,
+    })
+end
+
 local function initGame()
     maxEnergy = 3000
     energy = maxEnergy
@@ -204,9 +228,11 @@ local function initGame()
     klingons = klingonsInQuadrant()
 
     mode = "main"
-    selected = 1
     cursorX = playerSX
     cursorY = playerSY
+
+    local sectorOY = 2
+    buildCmdMenu(sectorOY + SZ + 1)
 
     local gq = galaxy[playerQY][playerQX]
     setMsg("Sector [" .. playerQX .. "," .. playerQY .. "]. " ..
@@ -240,14 +266,9 @@ function game.update(dt, input)
     if gameOverFlag then return "menu" end
 
     if mode == "main" then
-        if p1.wasPressed("left") then
-            selected = selected - 1
-            if selected < 1 then selected = #modeNames end
-        elseif p1.wasPressed("right") then
-            selected = selected + 1
-            if selected > #modeNames then selected = 1 end
-        elseif p1.wasPressed("action") then
-            local m = modeNames[selected]
+        local result = cmdMenu:handleInput(input)
+        if result and result.type == "select" then
+            local m = result.item.data
             if m == "nav" then
                 mode = "nav"
                 cursorX = playerSX
@@ -582,20 +603,8 @@ function game.draw()
 
     local cmdY = sectorOY + SZ + 1
 
-    if mode == "main" then
-        for i, label in ipairs(modeLabels) do
-            local cx = 2 + (i - 1) * 5
-            term.setCursorPos(cx, cmdY)
-            if i == selected then
-                term.setBackgroundColor(colors.gray)
-                term.setTextColor(colors.white)
-                term.write(" " .. label .. " ")
-                term.setBackgroundColor(colors.black)
-            else
-                term.setTextColor(colors.lightGray)
-                term.write(label)
-            end
-        end
+    if mode == "main" and cmdMenu then
+        cmdMenu:draw()
     end
 
     local panelY = cmdY + 2

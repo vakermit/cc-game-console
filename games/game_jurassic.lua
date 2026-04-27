@@ -1,4 +1,5 @@
 local sound = require("lib.sound")
+local Menu = require("lib.menu")
 
 local game = {}
 
@@ -12,6 +13,7 @@ local eventQueue, currentEvent
 local selected
 local message, messageLines
 local gameOverTimer, gameOverFlag
+local stateMenu
 local travelAnim, travelTicks
 local resultWait
 
@@ -1341,7 +1343,11 @@ local function advanceDay()
         }
         state = "event"
         setMessage(currentEvent.text)
-        selected = 1
+        local items = {}
+        for _, ch in ipairs(currentEvent.choices) do
+            table.insert(items, { label = ch })
+        end
+        buildStateMenu(items)
     else
         state = "evening"
         setMessage("Day " .. day .. " was uneventful. The jungle watches.")
@@ -1406,6 +1412,22 @@ local function playIntroTheme()
     end
 end
 
+local function buildStateMenu(items, sel)
+    stateMenu = Menu.new({
+        x = 4,
+        y = 7,
+        max_rows = #items,
+        highlight_fg = colors.white,
+        highlight_bg = colors.gray,
+        default_color = colors.lightGray,
+        up_action = "p1_up",
+        down_action = "p1_down",
+        select_action = "p1_action",
+        items = items,
+    })
+    if sel then stateMenu:setSelected(sel) end
+end
+
 function game.init(console)
     width = console.getWidth()
     height = console.getHeight()
@@ -1425,45 +1447,42 @@ function game.update(dt, input)
             "You have a jeep, limited supplies, and very large problems.")
         if p1.wasPressed("action") then
             state = "difficulty"
-            selected = 2
+            local items = {}
+            for _, d in ipairs(difficulties) do
+                table.insert(items, { label = d.name, data = d })
+            end
+            buildStateMenu(items, 2)
         end
 
     elseif state == "difficulty" then
-        if p1.wasPressed("up") then
-            selected = selected - 1
-            if selected < 1 then selected = #difficulties end
-        elseif p1.wasPressed("down") then
-            selected = selected + 1
-            if selected > #difficulties then selected = 1 end
-        elseif p1.wasPressed("action") then
+        local result = stateMenu:handleInput(input)
+        if result and result.type == "select" then
             sound.stop()
-            applyDifficulty(selected)
+            applyDifficulty(result.index)
             state = "pace"
-            selected = pace
+            local items = {}
+            for _, name in ipairs(paceNames) do
+                table.insert(items, { label = name })
+            end
+            buildStateMenu(items, pace)
         end
 
     elseif state == "pace" then
-        if p1.wasPressed("up") then
-            selected = selected - 1
-            if selected < 1 then selected = 3 end
-        elseif p1.wasPressed("down") then
-            selected = selected + 1
-            if selected > 3 then selected = 1 end
-        elseif p1.wasPressed("action") then
-            pace = selected
+        local result = stateMenu:handleInput(input)
+        if result and result.type == "select" then
+            pace = result.index
             state = "rations"
-            selected = rations
+            local items = {}
+            for _, name in ipairs(rationNames) do
+                table.insert(items, { label = name })
+            end
+            buildStateMenu(items, rations)
         end
 
     elseif state == "rations" then
-        if p1.wasPressed("up") then
-            selected = selected - 1
-            if selected < 1 then selected = 3 end
-        elseif p1.wasPressed("down") then
-            selected = selected + 1
-            if selected > 3 then selected = 1 end
-        elseif p1.wasPressed("action") then
-            rations = selected
+        local result = stateMenu:handleInput(input)
+        if result and result.type == "select" then
+            rations = result.index
             state = "travel"
             travelAnim = 0
             travelTicks = 20
@@ -1476,17 +1495,11 @@ function game.update(dt, input)
         end
 
     elseif state == "event" then
-        local numChoices = #currentEvent.choices
-        if p1.wasPressed("up") then
-            selected = selected - 1
-            if selected < 1 then selected = numChoices end
-        elseif p1.wasPressed("down") then
-            selected = selected + 1
-            if selected > numChoices then selected = 1 end
-        elseif p1.wasPressed("action") then
-            local result = currentEvent.resolve(selected)
+        local result = stateMenu:handleInput(input)
+        if result and result.type == "select" then
+            local eventResult = currentEvent.resolve(result.index)
             karma = math.max(-100, math.min(100, karma + (currentEvent.karma_rating or 0)))
-            setMessage(result)
+            setMessage(eventResult)
             state = "result"
             resultWait = 0
         end
@@ -1502,7 +1515,11 @@ function game.update(dt, input)
             if not checkGameOver() then
                 day = day + 1
                 state = "pace"
-                selected = pace
+                local items = {}
+                for _, name in ipairs(paceNames) do
+                    table.insert(items, { label = name })
+                end
+                buildStateMenu(items, pace)
             end
         end
     end
@@ -1570,61 +1587,50 @@ function game.draw()
         term.setTextColor(colors.yellow)
         term.setCursorPos(2, textY)
         term.write("Choose difficulty:")
-        for i, d in ipairs(difficulties) do
-            term.setCursorPos(4, textY + 1 + i)
-            if i == selected then
-                term.setTextColor(colors.white)
-                term.setBackgroundColor(colors.gray)
-                term.write(" " .. d.name .. " ")
+        if stateMenu then
+            stateMenu.y = textY + 2
+            stateMenu:draw()
+            for i, d in ipairs(difficulties) do
+                term.setCursorPos(4 + #d.name + 3, textY + 1 + i)
+                term.setTextColor(colors.gray)
                 term.setBackgroundColor(colors.black)
-            else
-                term.setTextColor(colors.lightGray)
-                term.write(d.name)
+                term.write(d.desc)
             end
-            term.setTextColor(colors.gray)
-            term.write("  " .. d.desc)
+            local sel = stateMenu:getSelected()
+            local d = difficulties[sel]
+            term.setCursorPos(4, textY + #difficulties + 3)
+            term.setTextColor(colors.lightGray)
+            term.write("Fuel:" .. d.fuel .. "  Food:" .. d.food .. "  Ammo:" .. d.ammo .. "  Med:" .. d.medkits)
         end
-        local d = difficulties[selected]
-        term.setCursorPos(4, textY + #difficulties + 3)
-        term.setTextColor(colors.lightGray)
-        term.write("Fuel:" .. d.fuel .. "  Food:" .. d.food .. "  Ammo:" .. d.ammo .. "  Med:" .. d.medkits)
 
     elseif state == "pace" then
         term.setTextColor(colors.yellow)
         term.setCursorPos(2, textY)
         term.write("Set travel pace:")
-        for i, name in ipairs(paceNames) do
-            term.setCursorPos(4, textY + 1 + i)
-            if i == selected then
-                term.setTextColor(colors.white)
-                term.setBackgroundColor(colors.gray)
-                term.write(" " .. name .. " ")
+        if stateMenu then
+            stateMenu.y = textY + 2
+            stateMenu:draw()
+            for i, name in ipairs(paceNames) do
+                term.setCursorPos(4 + #name + 3, textY + 1 + i)
+                term.setTextColor(colors.gray)
                 term.setBackgroundColor(colors.black)
-            else
-                term.setTextColor(colors.lightGray)
-                term.write(name)
+                term.write("~" .. paceDist[i] .. "mi  -" .. paceFuel[i] .. "fuel")
             end
-            term.setTextColor(colors.gray)
-            term.write("  ~" .. paceDist[i] .. "mi  -" .. paceFuel[i] .. "fuel")
         end
 
     elseif state == "rations" then
         term.setTextColor(colors.yellow)
         term.setCursorPos(2, textY)
         term.write("Set rations:")
-        for i, name in ipairs(rationNames) do
-            term.setCursorPos(4, textY + 1 + i)
-            if i == selected then
-                term.setTextColor(colors.white)
-                term.setBackgroundColor(colors.gray)
-                term.write(" " .. name .. " ")
+        if stateMenu then
+            stateMenu.y = textY + 2
+            stateMenu:draw()
+            for i, name in ipairs(rationNames) do
+                term.setCursorPos(4 + #name + 3, textY + 1 + i)
+                term.setTextColor(colors.gray)
                 term.setBackgroundColor(colors.black)
-            else
-                term.setTextColor(colors.lightGray)
-                term.write(name)
+                term.write("-" .. rationFood[i] .. "food/person")
             end
-            term.setTextColor(colors.gray)
-            term.write("  -" .. rationFood[i] .. "food/person")
         end
 
     elseif state == "travel" then
@@ -1654,17 +1660,9 @@ function game.draw()
             term.write(line)
         end
         choiceY = textY + #messageLines + 3
-        for i, ch in ipairs(currentEvent.choices) do
-            term.setCursorPos(4, choiceY + i - 1)
-            if i == selected then
-                term.setTextColor(colors.white)
-                term.setBackgroundColor(colors.gray)
-                term.write(" " .. ch .. " ")
-                term.setBackgroundColor(colors.black)
-            else
-                term.setTextColor(colors.lightGray)
-                term.write(ch)
-            end
+        if stateMenu then
+            stateMenu.y = choiceY
+            stateMenu:draw()
         end
 
     elseif state == "result" then

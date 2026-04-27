@@ -1,4 +1,5 @@
 local cards = require("lib.cards")
+local Menu = require("lib.menu")
 
 local game = {}
 
@@ -8,6 +9,7 @@ local balance, bet
 local phase
 local message, messageColor
 local resultTimer
+local playerMenu
 
 local BET_MIN = 10
 local BET_MAX = 500
@@ -48,6 +50,23 @@ local function deal()
         phase = "player"
         message = "Hit or Stand?"
         messageColor = colors.white
+        playerMenu = Menu.new({
+            x = 2,
+            y = 1,
+            max_rows = 3,
+            highlight_fg = colors.white,
+            highlight_bg = colors.gray,
+            default_color = colors.lightGray,
+            default_bg = colors.green,
+            up_action = "p1_up",
+            down_action = "p1_down",
+            select_action = "p1_action",
+            items = {
+                { label = "Hit", color = colors.lime, data = "hit" },
+                { label = "Stand", color = colors.yellow, data = "stand" },
+                { label = "Surrender", color = colors.red, data = "surrender" },
+            },
+        })
     end
 end
 
@@ -119,27 +138,32 @@ function game.update(dt, input)
         end
 
     elseif phase == "player" then
-        if p1.wasPressed("up") then
-            cards.addToHand(playerHand, cards.draw(deck, 1))
-            if cards.isBusted(playerHand) then
+        local result = playerMenu:handleInput(input)
+        if result and result.type == "select" then
+            local action = result.item.data
+            if action == "hit" then
+                cards.addToHand(playerHand, cards.draw(deck, 1))
+                if cards.isBusted(playerHand) then
+                    dealerHand[2].faceUp = true
+                    balance = balance - bet
+                    message = "Bust! -" .. bet
+                    messageColor = colors.red
+                    phase = "done"
+                else
+                    message = "Hit or Stand?"
+                    messageColor = colors.white
+                    playerMenu:setSelected(1)
+                end
+            elseif action == "stand" then
+                dealerPlay()
+            elseif action == "surrender" then
                 dealerHand[2].faceUp = true
-                balance = balance - bet
-                message = "Bust! -" .. bet
-                messageColor = colors.red
+                local loss = math.floor(bet / 2)
+                balance = balance - loss
+                message = "Surrender -" .. loss
+                messageColor = colors.orange
                 phase = "done"
-            else
-                message = "Hit or Stand?"
-                messageColor = colors.white
             end
-        elseif p1.wasPressed("down") then
-            dealerPlay()
-        elseif p1.wasPressed("alt") then
-            dealerHand[2].faceUp = true
-            local loss = math.floor(bet / 2)
-            balance = balance - loss
-            message = "Surrender -" .. loss
-            messageColor = colors.orange
-            phase = "done"
         end
 
     elseif phase == "done" then
@@ -239,23 +263,9 @@ function game.draw()
         term.write("] Deal")
     end
 
-    if phase == "player" then
-        term.setCursorPos(2, height)
-        term.setBackgroundColor(colors.green)
-        term.setTextColor(colors.lightGray)
-        term.write("[")
-        term.setTextColor(colors.lime)
-        term.write("up")
-        term.setTextColor(colors.lightGray)
-        term.write("] Hit  [")
-        term.setTextColor(colors.yellow)
-        term.write("down")
-        term.setTextColor(colors.lightGray)
-        term.write("] Stand  [")
-        term.setTextColor(colors.red)
-        term.write("alt")
-        term.setTextColor(colors.lightGray)
-        term.write("] Surrender")
+    if phase == "player" and playerMenu then
+        playerMenu.y = height - 2
+        playerMenu:draw()
     end
 
     if phase == "done" then
