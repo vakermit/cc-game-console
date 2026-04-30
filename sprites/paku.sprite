@@ -1,0 +1,30 @@
+-- Paku sprite
+-- States: right, left, up, down
+
+@state right
+C<
+C<
+---
+@@
+@@
+
+@state left
+>C
+>C
+---
+@@
+@@
+
+@state up
+VV
+..
+---
+@@
+@@
+
+@state down
+..
+^^
+---
+@@
+@@

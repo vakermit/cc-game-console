@@ -1,0 +1,16 @@
+-- Ghost sprite
+-- States: normal, scared
+
+@state normal
+/\
+WW
+---
+/\
+MM
+
+@state scared
+~~
+WW
+---
+~~
+MM
