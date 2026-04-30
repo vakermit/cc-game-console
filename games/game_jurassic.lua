@@ -1311,6 +1311,8 @@ local function applyDifficulty(diff)
     medkits = d.medkits
 end
 
+local buildStateMenu
+
 local function advanceDay()
     local dist = paceDist[pace]
     local fc = paceFuel[pace]
@@ -1412,7 +1414,7 @@ local function playIntroTheme()
     end
 end
 
-local function buildStateMenu(items, sel)
+buildStateMenu = function(items, sel)
     stateMenu = Menu.new({
         x = 4,
         y = 7,
