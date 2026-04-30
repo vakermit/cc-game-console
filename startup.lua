@@ -20,7 +20,7 @@ end
 shell.run("reset-monitor")
 
 status("Waiting for startup...")
-sleep(15)
+sleep(10)
 while true do
     status("Starting screensaver...")
     shell.run("screensaver")

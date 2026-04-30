@@ -10,6 +10,7 @@ local playerX, playerY, playerVelY
 local playerState, playerFrame, playerAnimTimer
 local playerLives, playerScore, playerInvuln
 local onGround, onVine, onLadder
+local vineDir
 
 local worldOffset, worldSpeed
 local tickAccum
@@ -25,15 +26,15 @@ local enemySpawnInterval
 local sprites = {}
 local gameOverFlag
 local started
-
 local GRAVITY = 0.8
-local JUMP_STRENGTH = -0.7
+local JUMP_STRENGTH = -1.0
 local VINE_SPEED = 0.15
 local LADDER_SPEED = 0.15
 local BASE_WORLD_SPEED = 0.6
 local ANIM_SPEED = 0.15
 local INVULN_TIME = 2.0
 local ENEMY_ANIM_SPEED = 0.2
+local VINE_JUMP_HORIZONTAL = 1.5
 
 local enemyTypes = {
     {
@@ -126,6 +127,7 @@ local function resetPlayer()
     onGround = true
     onVine = false
     onLadder = false
+    vineDir = 1
 end
 
 local function initRound()
@@ -169,15 +171,30 @@ local function getSegmentAt(worldX)
 end
 
 local function checkGroundBelow(screenX)
-    local seg = getSegmentAt(screenX)
-    return seg ~= nil and seg.ground
+    local pw = sprite.getWidth(sprites.player, "standing")
+    local segL = getSegmentAt(screenX)
+    local segR = getSegmentAt(screenX + pw - 1)
+    local groundL = segL ~= nil and segL.ground
+    local groundR = segR ~= nil and segR.ground
+    return groundL or groundR
+end
+
+local function findSafeX(startX)
+    for offset = 0, width do
+        local x = startX - offset
+        if x >= 1 and checkGroundBelow(x) then return x end
+        x = startX + offset
+        if x <= width and checkGroundBelow(x) then return x end
+    end
+    return startX
 end
 
 local function checkVineAt(screenX, screenY)
     for _, seg in ipairs(segments) do
         local segScreenX = seg.x - worldOffset
         if seg.vine and screenX >= segScreenX and screenX < segScreenX + segmentWidth then
-            if screenY <= seg.vineY + 4 and screenY >= seg.vineY then
+            local vineBottom = groundY - 8
+            if screenY <= vineBottom and screenY >= seg.vineY then
                 return true, seg
             end
         end
@@ -261,6 +278,14 @@ function game.update(dt, input)
 
     if onVine then
         playerState = "swinging"
+        if p1.wasPressed("left") then
+            vineDir = -1
+            playerFrame = 2
+        end
+        if p1.wasPressed("right") then
+            vineDir = 1
+            playerFrame = 1
+        end
         if p1.isDown("up") then
             playerY = playerY - VINE_SPEED
         end
@@ -270,10 +295,7 @@ function game.update(dt, input)
         if p1.wasPressed("action") then
             onVine = false
             playerVelY = JUMP_STRENGTH * 0.7
-            onGround = false
-        end
-        if p1.isDown("left") or p1.isDown("right") then
-            onVine = false
+            worldOffset = worldOffset + VINE_JUMP_HORIZONTAL * vineDir
             onGround = false
         end
     elseif onLadder then
@@ -336,6 +358,7 @@ function game.update(dt, input)
                     return
                 end
                 resetPlayer()
+                playerX = findSafeX(playerX)
                 playerInvuln = INVULN_TIME
                 return
             end
@@ -359,6 +382,8 @@ function game.update(dt, input)
             local hasVine = checkVineAt(playerX, playerY)
             if hasVine then
                 onVine = true
+                vineDir = 1
+                playerFrame = 1
                 onGround = false
                 playerVelY = 0
                 playerState = "swinging"
@@ -374,11 +399,13 @@ function game.update(dt, input)
         end
     end
 
-    playerAnimTimer = playerAnimTimer + 0.05
+    if not onVine then
+        playerAnimTimer = playerAnimTimer + 0.05
+    end
     if playerAnimTimer >= ANIM_SPEED then
         playerAnimTimer = playerAnimTimer - ANIM_SPEED
         local fc = sprite.getFrameCount(sprites.player, playerState)
-        if fc > 0 then
+        if fc > 0 and not onVine then
             playerFrame = (playerFrame % fc) + 1
         end
     end
@@ -436,6 +463,7 @@ function game.update(dt, input)
     end
 
     worldSpeed = BASE_WORLD_SPEED + (playerScore / 5000) * 0.3
+
 end
 
 local function drawGround()
@@ -465,8 +493,9 @@ local function drawGround()
                 term.setBackgroundColor(colors.black)
                 term.setTextColor(colors.green)
                 local vx = screenX + 1
+                local vineBottom = groundY - 8
                 if vx >= 1 and vx <= width then
-                    for vy = 1, seg.vineY + 4 do
+                    for vy = 1, vineBottom do
                         term.setCursorPos(vx, vy)
                         if vy <= seg.vineY then
                             term.write("|")
@@ -587,6 +616,7 @@ function game.draw()
         term.setCursorPos(mx - 2, my + 1)
         term.write(" Score: " .. math.floor(playerScore / 10) .. " ")
         term.setBackgroundColor(colors.black)
+
     end
 end
 

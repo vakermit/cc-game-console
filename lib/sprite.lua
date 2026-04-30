@@ -43,13 +43,13 @@ function sprite.load(filename)
 
     for line in content:gmatch("[^\n]*") do
         local stateName = line:match("^@state%s+(.+)")
-        if line:match("^%-%-") then
+        if line == "---" then
+            finishFrame()
+        elseif line:match("^%-%-") then
         elseif stateName then
             finishState()
             currentState = stateName:match("^%s*(.-)%s*$")
-        elseif line == "---" then
-            finishFrame()
-        elseif currentState then
+        elseif currentState and line ~= "" then
             table.insert(currentFrame, line)
         end
     end

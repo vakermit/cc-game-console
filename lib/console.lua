@@ -7,6 +7,46 @@ local MenuGroup = require("lib.menugroup")
 
 local console = {}
 
+local function getTimestamp()
+    local epoch = os.epoch and os.epoch("local") or (os.clock() * 1000)
+    local totalSec = math.floor(epoch / 1000)
+    local sec = totalSec % 60
+    local min = math.floor(totalSec / 60) % 60
+    local hour = math.floor(totalSec / 3600) % 24
+    local days = math.floor(totalSec / 86400)
+    local y = 1970
+    while true do
+        local leap = (y % 4 == 0 and y % 100 ~= 0) or (y % 400 == 0)
+        local diy = leap and 366 or 365
+        if days < diy then break end
+        days = days - diy
+        y = y + 1
+    end
+    local monthDays = {31, (((y % 4 == 0 and y % 100 ~= 0) or (y % 400 == 0)) and 29 or 28), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
+    local m = 1
+    for i = 1, 12 do
+        if days < monthDays[i] then
+            m = i
+            break
+        end
+        days = days - monthDays[i]
+    end
+    local d = days + 1
+    return string.format("%04d%02d%02d%02d%02d%02d", y, m, d, hour, min, sec)
+end
+
+local function logError(context, err)
+    fs.makeDir("tmp")
+    local filename = "tmp/" .. getTimestamp() .. ".err"
+    local file = fs.open(filename, "w")
+    if not file then return end
+    file.writeLine("-- Error: " .. tostring(context))
+    file.writeLine("-- Time: " .. getTimestamp())
+    file.writeLine("")
+    file.writeLine(tostring(err))
+    file.close()
+end
+
 local statusWin, gameWin
 local originalTerm
 local consoleWidth, consoleHeight
@@ -83,6 +123,7 @@ function console.discoverGames()
             if not name:find("_test_") then
                 local modPath = gameDir .. "." .. name
                 local ok, game = pcall(require, modPath)
+                if not ok then logError("require " .. modPath, game) end
                 if ok and type(game) == "table" and type(game.title) == "function" then
                     table.insert(games, game)
                 end
@@ -357,6 +398,7 @@ function console.runGame(game)
         term.redirect(old)
 
         if not ok then
+            logError("game.init " .. game.title(), err)
             drawStatus("Error: " .. tostring(err))
             os.sleep(3)
             return
@@ -380,7 +422,8 @@ function console.runGame(game)
                 if input.isDown(backAction1) and input.isDown(backAction2) then
                     backHoldCount = backHoldCount + 1
                     if backHoldCount >= backThreshold then
-                        pcall(game.cleanup)
+                        local cok, cerr = pcall(game.cleanup)
+                        if not cok then logError("game.cleanup back-exit", cerr) end
                         clearGame()
                         return
                     end
@@ -392,19 +435,23 @@ function console.runGame(game)
                 local gok, gerr = pcall(game.update, tickRate, input)
                 if gok then
                     if gerr == "menu" then
-                        pcall(game.draw)
+                        local dok, derr = pcall(game.draw)
+                        if not dok then logError("game.draw menu", derr) end
                         term.redirect(old)
                         gameEnded = true
                         break
                     end
-                    pcall(game.draw)
+                    local dok, derr = pcall(game.draw)
+                    if not dok then logError("game.draw", derr) end
                 end
                 term.redirect(old)
 
                 if not gok then
+                    logError("game.update", gerr)
                     drawStatus("Crash: " .. tostring(gerr))
                     os.sleep(3)
-                    pcall(game.cleanup)
+                    local cok, cerr = pcall(game.cleanup)
+                    if not cok then logError("game.cleanup crash", cerr) end
                     clearGame()
                     return
                 end
@@ -413,7 +460,8 @@ function console.runGame(game)
             end
         end
 
-        pcall(game.cleanup)
+        local cok, cerr = pcall(game.cleanup)
+        if not cok then logError("game.cleanup end-loop", cerr) end
 
         if not gameEnded then
             clearGame()
@@ -479,6 +527,7 @@ end
 function console.runTestMode(testName)
     local modPath = config.system.gameDir .. "." .. testName
     local ok, game = pcall(require, modPath)
+    if not ok then logError("require test " .. modPath, game) end
     if not ok or type(game) ~= "table" then
         print("Failed to load test game: " .. tostring(game))
         return
@@ -488,6 +537,37 @@ end
 
 function console.isRunning()
     return running
+end
+
+function console.debugScreenshot(label)
+    if not gameWin then return end
+
+    local w, h = gameWin.getSize()
+    label = label or "debug"
+
+    fs.makeDir("tmp")
+
+    local timestamp = getTimestamp()
+    local filename = "tmp/debug_screenshot_" .. timestamp .. ".src"
+
+    local file = fs.open(filename, "w")
+    if not file then return end
+
+    file.writeLine("-- Debug Screenshot: " .. label)
+    file.writeLine("-- Time: " .. timestamp)
+    file.writeLine("-- Size: " .. w .. "x" .. h)
+    file.writeLine("")
+
+    for row = 1, h do
+        local text, fg, bg = gameWin.getLine(row)
+        file.writeLine("ROW " .. row)
+        file.writeLine("TXT: " .. (text or ""))
+        file.writeLine(" FG: " .. (fg or ""))
+        file.writeLine(" BG: " .. (bg or ""))
+    end
+
+    file.close()
+    return filename
 end
 
 function console.shutdown()
