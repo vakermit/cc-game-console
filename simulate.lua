@@ -39,15 +39,13 @@ end
 -- Simulation config
 ----------------------------------------------------------------------------
 local SIM_CONFIG = {
-    monitor_width  = 6,   -- monitor blocks wide
-    monitor_height = 4,   -- monitor blocks tall
-    chars_per_block_x = 7,
-    chars_per_block_y = 5,
+    screen_width  = 61,
+    screen_height = 26,
     tick_rate = 0.05,
 }
 
-local SCREEN_W = SIM_CONFIG.monitor_width * SIM_CONFIG.chars_per_block_x   -- 42
-local SCREEN_H = SIM_CONFIG.monitor_height * SIM_CONFIG.chars_per_block_y  -- 20
+local SCREEN_W = SIM_CONFIG.screen_width
+local SCREEN_H = SIM_CONFIG.screen_height
 
 ----------------------------------------------------------------------------
 -- ANSI terminal helpers
@@ -400,35 +398,46 @@ end
 -- Window API
 ----------------------------------------------------------------------------
 local cc_window = {}
+local allWindows = {}
 
 function cc_window.create(parent, x, y, w, h, visible)
     local win = makeTermObject(w, h, x, y, parent, visible)
 
-    local origFlush = win._flush
-    win._flush = function()
-        if parent and parent._flush then
-            local buf = win._getBuffer()
-            local parentBuf = parent._getBuffer()
-            if parentBuf then
-                for row = 1, h do
-                    for col = 1, w do
-                        local py = y + row - 1
-                        local px = x + col - 1
-                        if py >= 1 and py <= parentBuf.h and px >= 1 and px <= parentBuf.w then
-                            parentBuf.chars[py][px] = buf.chars[row][col]
-                            parentBuf.fg[py][px] = buf.fg[row][col]
-                            parentBuf.bg[py][px] = buf.bg[row][col]
-                        end
-                    end
-                end
-            end
-            parent._flush()
-        else
-            origFlush()
+    local winInfo = { win = win, parent = parent, x = x, y = y, w = w, h = h }
+    table.insert(allWindows, winInfo)
+
+    local origReposition = win.reposition
+    win.reposition = function(nx, ny, nw, nh)
+        origReposition(nx, ny, nw, nh)
+        winInfo.x = nx or winInfo.x
+        winInfo.y = ny or winInfo.y
+        if nw and nh then
+            winInfo.w = nw
+            winInfo.h = nh
         end
     end
 
     return win
+end
+
+local function compositeWindows()
+    for _, info in ipairs(allWindows) do
+        local buf = info.win._getBuffer()
+        local parentBuf = info.parent and info.parent._getBuffer()
+        if buf and parentBuf then
+            for row = 1, info.h do
+                for col = 1, info.w do
+                    local py = info.y + row - 1
+                    local px = info.x + col - 1
+                    if py >= 1 and py <= parentBuf.h and px >= 1 and px <= parentBuf.w then
+                        parentBuf.chars[py][px] = buf.chars[row][col]
+                        parentBuf.fg[py][px] = buf.fg[row][col]
+                        parentBuf.bg[py][px] = buf.bg[row][col]
+                    end
+                end
+            end
+        end
+    end
 end
 
 ----------------------------------------------------------------------------
@@ -495,17 +504,23 @@ function cc_fs.exists(path)
         f:close()
         return true
     end
-    local ok, _, code = _real_os_rename(real, real)
-    if ok then return true end
-    if code == 13 then return true end
+    local p = _real_io_popen('test -e "' .. real .. '" && echo y || echo n')
+    if p then
+        local result = p:read("*l")
+        p:close()
+        return result == "y"
+    end
     return false
 end
 
 function cc_fs.isDir(path)
     local real = resolvePath(path)
-    local ok, err, code = _real_os_rename(real .. "/.", real .. "/.")
-    if ok then return true end
-    if code == 13 then return true end
+    local p = _real_io_popen('test -d "' .. real .. '" && echo y || echo n')
+    if p then
+        local result = p:read("*l")
+        p:close()
+        return result == "y"
+    end
     return false
 end
 
@@ -950,6 +965,20 @@ function cc_parallel.waitForAny(...)
         cos[i] = { co = coroutine.create(fn), filter = nil }
     end
 
+    for i, entry in ipairs(cos) do
+        local ok, result = coroutine.resume(entry.co)
+        if not ok then
+            ansi.moveTo(1, SCREEN_H + 2)
+            ansi.reset()
+            _real_io_write("Coroutine error: " .. tostring(result) .. "\n")
+            return
+        end
+        if coroutine.status(entry.co) == "dead" then
+            return
+        end
+        entry.filter = result
+    end
+
     while true do
         pollKeyboard(nil, eventQueue)
         pumpTimers()
@@ -1000,6 +1029,9 @@ function cc_parallel.waitForAny(...)
 
             if allDead then return end
         end
+
+        compositeWindows()
+        if rootTerminal then rootTerminal._flush() end
     end
 end
 
@@ -1008,6 +1040,19 @@ function cc_parallel.waitForAll(...)
     local cos = {}
     for i, fn in ipairs(funcs) do
         cos[i] = { co = coroutine.create(fn), filter = nil }
+    end
+
+    for i, entry in ipairs(cos) do
+        local ok, result = coroutine.resume(entry.co)
+        if not ok then
+            ansi.moveTo(1, SCREEN_H + 2)
+            ansi.reset()
+            _real_io_write("Coroutine error: " .. tostring(result) .. "\n")
+            return
+        end
+        if coroutine.status(entry.co) ~= "dead" then
+            entry.filter = result
+        end
     end
 
     while true do
@@ -1048,6 +1093,9 @@ function cc_parallel.waitForAll(...)
 
             if allDead then return end
         end
+
+        compositeWindows()
+        if rootTerminal then rootTerminal._flush() end
     end
 end
 
@@ -1280,11 +1328,15 @@ local function runSimulation(gamePath, gameName)
     activeInputModule = inputModule
 
     if gameName == "--console" then
-        local ok, err = pcall(dofile, gamePath .. "/game-console.lua")
+        local function consoleMain()
+            dofile(gamePath .. "/game-console.lua")
+        end
+        local ok, err = pcall(cc_parallel.waitForAny, consoleMain)
+        cleanupTerminal()
 
         if not ok then
-            cleanupTerminal()
-            print("Error running console: " .. tostring(err))
+            _real_io_write("Error running console: " .. tostring(err) .. "\n")
+            _real_io_flush()
         end
     else
         local gameModPath = "games." .. gameName

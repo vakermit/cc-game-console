@@ -24,6 +24,8 @@ screensaver.lua      Screensaver engine - discovers and cycles screen modules
 reset.lua            Utility - clears the monitor
 config.lua           Hardware mappings, network channel, system settings
 transmitter.lua      Signal transmitter program (runs on input computers)
+simulate.lua         Local CC:Tweaked emulator - play games on macOS/Linux
+simulate.sh          Emulator launcher - checks Lua, validates game, resizes iTerm2
 lib/
   console.lua        Core console: menu, game loop, network/redstone listeners
   menu.lua           Reusable menu widget (select, toggle, scroll, hitTest)
@@ -32,22 +34,31 @@ lib/
   sound.lua          Queue-based audio system (notes, sounds, DFPWM streaming)
   block_letters.lua  5x5 bitmap font renderer for title screens
   cards.lua          Card deck/hand management and rendering
+  sprite.lua         Sprite loading and drawing system
   screen.lua         Shared utilities for screensaver modules
 sounds/              DFPWM audio files for game music and effects
+sprites/             Sprite definition files for game graphics
 screens/
   screen_ball.lua    Bouncing ball with color-changing trail
   screen_cat.lua     Wandering ASCII cat with blinking eyes
   screen_fireworks.lua Firework rockets and particle explosions
   screen_matrix.lua  Cascading green character rain
 games/
+  game_adventure.lua Adventure - text-based exploration
   game_blackjack.lua Blackjack - single player card game
   game_blocks.lua    Falling Blocks - single player puzzle
+  game_breakout.lua  Breakout - single player brick breaker
+  game_flappy.lua    Flappy Bird - single player obstacle dodger
   game_invaders.lua  Space Invaders - single player shooter
   game_jurassic.lua  Jurassic Trail - survival narrative
   game_paku.lua      Paku Paku - single player maze chase
+  game_pitfall.lua   Pitfall - side-scrolling platformer
   game_pong.lua      Pong - 2 player paddle game
   game_road_racer.lua Road Racer - single player top-down racer
+  game_snake.lua     Snake - 1-2 player classic
+  game_tictactoe.lua Tic Tac Toe - 2 player strategy
   game_trek.lua      Star Trek - tactical space combat
+  game_wumpus.lua    Hunt the Wumpus - text adventure
   game_test_inputs.lua Input test visualizer (--test flag)
   game_test_audio.lua  Audio test tool (--test-audio flag)
 ```
@@ -74,6 +85,39 @@ shell.run("transmitter")
 ```
 
 With startup files in place, the entire arcade boots itself when the Minecraft chunk loads. To bypass auto-start and get a shell prompt, hold **Ctrl+T** during boot.
+
+## Local Simulator
+
+Play games on your Mac or Linux machine without Minecraft using the included CC:Tweaked emulator.
+
+**Requirements:** Lua 5.3+ (`brew install lua` on macOS)
+
+```bash
+# Run a specific game
+./simulate.sh pong
+./simulate.sh snake
+
+# Run the full game console with menu
+./simulate.sh --console
+
+# List available games
+./simulate.sh --list
+
+# Headless test (verifies game loads and runs 5 frames)
+lua simulate.lua --test pong
+```
+
+**Simulator Controls:**
+
+| Player 1 | Player 2 | System |
+|-----------|----------|--------|
+| W/A/S/D - move | Arrow keys - move | ESC - quit |
+| Space - action | Enter - action | |
+| Z - alt | | |
+
+The simulator emulates all CC:Tweaked APIs (term, window, colors, fs, os, peripheral, parallel, textutils, redstone, keys) using ANSI terminal rendering. Sound is silently stubbed. Screen size defaults to 61x26 and can be changed in the `SIM_CONFIG` table at the top of `simulate.lua`.
+
+**iTerm2 (macOS):** The launcher auto-resizes the terminal window to fit the game screen. For a larger font during gameplay, create an iTerm2 profile named "GameConsole" with your preferred font size — the simulator will switch to it automatically and restore your original profile on exit.
 
 ## Controls
 

@@ -109,6 +109,66 @@ if [ "$GAME_NAME" != "--console" ]; then
     fi
 fi
 
+# --- iTerm2 window sizing ---
+# Resize terminal to fit the game screen exactly (42x21).
+# Create an iTerm2 profile named "GameConsole" with a large font (e.g. 24pt)
+# and the simulator will auto-switch to it. Otherwise just resizes the window.
+GAME_COLS=61
+GAME_ROWS=27
+ORIGINAL_COLS=""
+ORIGINAL_ROWS=""
+ITERM2_PROFILE=""
+
+if [ "$(uname)" = "Darwin" ] && [ "$TERM_PROGRAM" = "iTerm.app" ]; then
+    ORIGINAL_COLS=$(tput cols)
+    ORIGINAL_ROWS=$(tput lines)
+
+    # Try switching to a "GameConsole" profile (user can create one with large font)
+    ITERM2_PROFILE=$(osascript <<'EOF' 2>/dev/null
+tell application "iTerm2"
+    tell current session of current tab of current window
+        return profile name
+    end tell
+end tell
+EOF
+    )
+
+    # Check if GameConsole profile exists by trying to switch to it
+    if printf '\e]1337;SetProfile=GameConsole\a' 2>/dev/null; then
+        sleep 0.3
+        # Verify we actually switched (profile change is best-effort)
+    fi
+
+    # Resize to fit game screen
+    osascript <<EOF 2>/dev/null
+tell application "iTerm2"
+    tell current session of current tab of current window
+        set columns to $GAME_COLS
+        set rows to $GAME_ROWS
+    end tell
+end tell
+EOF
+fi
+
+restore_terminal() {
+    if [ -n "$ITERM2_PROFILE" ]; then
+        # Restore original profile
+        printf '\e]1337;SetProfile=%s\a' "$ITERM2_PROFILE" 2>/dev/null
+    fi
+    if [ -n "$ORIGINAL_COLS" ]; then
+        osascript <<EOF 2>/dev/null
+tell application "iTerm2"
+    tell current session of current tab of current window
+        set columns to $ORIGINAL_COLS
+        set rows to $ORIGINAL_ROWS
+    end tell
+end tell
+EOF
+    fi
+}
+
+trap restore_terminal EXIT INT TERM
+
 # --- Launch ---
 cd "$SCRIPT_DIR"
-exec "$LUA_BIN" simulate.lua "$GAME_NAME" "$@"
+"$LUA_BIN" simulate.lua "$GAME_NAME" "$@"

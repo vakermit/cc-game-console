@@ -69,6 +69,18 @@ Transmitters send on channel 123 (configurable in config.lua):
 
 Key mappings in config.lua map (computerID, side) -> logical action (e.g., "p1_up").
 
+## Local Simulator
+
+Test games locally without Minecraft using the included CC:Tweaked emulator:
+
+```bash
+./simulate.sh pong           # Run a single game
+./simulate.sh --console      # Full game console with menu
+lua simulate.lua --test pong # Headless test (init + 5 frames)
+```
+
+The simulator provides all CC:Tweaked APIs. Keyboard controls: WASD+Space+Z (P1), Arrows+Enter (P2), ESC (quit). Games require no modifications to run in the simulator.
+
 ## Test Mode
 
 Run `game-console --test` to launch the input test visualizer. Shows real-time state of all 12 inputs (6 per player). Does not appear in the game selection menu. Hold alt+action to exit.
