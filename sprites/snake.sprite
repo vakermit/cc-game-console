@@ -1,0 +1,12 @@
+-- Snake sprite
+-- States: slither
+
+@state slither
+..~^
+.S}~
+---
+.~^.
+S}~.
+---
+~^..
+}~S.

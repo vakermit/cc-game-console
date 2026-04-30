@@ -1,0 +1,16 @@
+-- Scorpion sprite
+-- States: idle, strike
+
+@state idle
+/)..
+|/WW
+---
+./).
+|/WW
+
+@state strike
+/)!.
+|/WW
+---
+/)/.
+|/WW

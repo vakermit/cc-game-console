@@ -1,0 +1,16 @@
+-- Alligator sprite
+-- States: idle, attack
+
+@state idle
+__V===>
+\_____/
+---
+__V===>
+\____/
+
+@state attack
+_V====>
+\_____/
+---
+_VV==>
+\____/

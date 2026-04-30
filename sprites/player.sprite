@@ -1,0 +1,43 @@
+-- Stick figure player sprite
+-- States: standing, running, climbing, swinging, jumping
+
+@state standing
+.O.
+/|\
+/ \
+
+@state running
+.O.
+/|\
+/ \
+---
+.O.
+/|\
+.\..
+---
+.O.
+/|\
+/..
+
+@state jumping
+.O.
+/|\
+..V
+
+@state climbing
+.O.
+/|\
+.|.
+---
+.O.
+\|/
+.|.
+
+@state swinging
+..O
+./|
+...\
+---
+O..
+|\..
+/..
