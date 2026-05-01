@@ -110,11 +110,12 @@ if [ "$GAME_NAME" != "--console" ]; then
 fi
 
 # --- iTerm2 window sizing ---
-# Resize terminal to fit the game screen exactly (42x21).
+# Resize terminal to fit the game screen exactly (61x27) + (5,2) + (1,1) for borders and padding = 67x30. 
+# If the user has an iTerm2 profile named "GameConsole" with a large font, it will switch to that profile for better visibility. Otherwise, it just resizes the current window. On exit, it restores the original size and profile.
 # Create an iTerm2 profile named "GameConsole" with a large font (e.g. 24pt)
 # and the simulator will auto-switch to it. Otherwise just resizes the window.
-GAME_COLS=61
-GAME_ROWS=27
+GAME_COLS=67
+GAME_ROWS=30
 ORIGINAL_COLS=""
 ORIGINAL_ROWS=""
 ITERM2_PROFILE=""
