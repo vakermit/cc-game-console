@@ -1,0 +1,37 @@
+-- Frog sprite
+-- States: up, down, left, right, dead
+
+@state up
+/\
+()
+---
+{}
+()
+
+@state down
+()
+\/
+---
+()
+}{
+
+@state left
+>(
+>(
+---
+>{
+>{
+
+@state right
+)<
+)<
+---
+}<
+}<
+
+@state dead
+XX
+~~
+---
+><
+~~
